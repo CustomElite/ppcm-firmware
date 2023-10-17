@@ -1,0 +1,19 @@
+# Object files
+*.o
+*.elf
+*.map
+*.hex
+*.bin
+
+# Cmake files
+.cmake
+CMakeFiles
+CMakeCache.txt
+compile_commands.json
+cmake_install.cmake
+*.ninja*
+
+# Directories
+build
+.cache
+.vscode

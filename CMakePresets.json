@@ -1,0 +1,52 @@
+{
+    "version": 6,
+    "configurePresets": [
+        {
+            "name": "common",
+            "hidden": true,
+            "binaryDir": "${sourceDir}/build",
+            "installDir": "${sourceDir}/out/install",
+            "generator": "Ninja",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${presetName}",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": true
+            }
+        },
+        {
+            "name": "arm",
+            "hidden": true,
+            "inherits": "common",
+            "description": "Sets Ninja generator, toolchain file, and build + install directory",
+            "toolchainFile": "${sourceDir}/arm-toolchain.cmake",
+            "cacheVariables": {
+                "CMAKE_C_COMPILER_WORKS": true,
+                "CMAKE_CXX_COMPILER_WORKS": true
+            }
+        },
+        {
+            "name": "Debug",
+            "inherits": "arm",
+            "hidden": false,
+            "displayName": "ARM-GCC Debug Configure",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "Release",
+            "inherits": "arm",
+            "displayName": "ARM-GCC Release Configure",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "RelWithDebInfo",
+            "inherits": "arm",
+            "displayName": "ARM-GCC RelWithDebInfo Configure",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        }
+    ]
+}

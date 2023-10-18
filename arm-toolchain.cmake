@@ -1,7 +1,7 @@
-message("Running toolchain.cmake")
+message("Running arm-toolchain.cmake")
 set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_NAME Generic)
-set(CMAKE_SYSTEM_PROCESSOR arm-eabi)
+set(CMAKE_SYSTEM_PROCESSOR arm)
 
 set(C_FLAGS "-ffunction-sections -fdata-sections -ffreestanding -fmessage-length=0 -specs=nano.specs")
 set(CPP_FLAGS "-fno-threadsafe-statics -fno-rtti -fno-exceptions -fno-use-cxa-atexit -Wno-volatile")
@@ -18,4 +18,4 @@ set(CMAKE_EXECUTABLE_SUFFIX_C ".elf")
 set(CMAKE_EXECUTABLE_SUFFIX_CXX ".elf")
 
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
-message("Toolchain was setup successfully")
+message("arm-none-eabi toolchain is configured")

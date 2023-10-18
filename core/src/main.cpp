@@ -20,7 +20,7 @@ int main()
     while (1) 
     {
         LL_GPIO_TogglePin(STATUS_LED_PORT, STATUS_LED_PIN);
-        LL_mDelay(2000u);
+        LL_mDelay(5000u);
     }
     
     return 0;

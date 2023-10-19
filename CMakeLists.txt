@@ -15,11 +15,11 @@ set(STM32_MCU STM32F103xB)
 set(STM32_FAMILY STM32F1xx)
 
 # Linker script
-set(LINKER_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/scripts/linker_stm32f1c8tx.ld)
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/linker_stm32f1c8tx.ld)
 # ST startup script
-set(STARTUP_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/scripts/startup_stm32f103xb.s)
+set(STARTUP_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/startup_stm32f103xb.s)
 
-#add_subdirectory(drivers)
+add_subdirectory(libs/etl)
 
 set(PROJECT_INCLUDE_DIR
     core/include
@@ -60,7 +60,7 @@ add_executable(${PROJECT_NAME}
     ${LIBS_SRC}
     ${STARTUP_SCRIPT})
 
-#target_link_libraries(${PROJECT_NAME} PRIVATE ppcm-drivers)
+target_link_libraries(${PROJECT_NAME} PRIVATE etl::etl)
 
 # Include directories
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -72,7 +72,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_compile_definitions(${PROJECT_NAME} PRIVATE
     ${STM32_MCU}
     USE_FULL_LL_DRIVER
-    HSE_VALUE=8000000
     HSE_STARTUP_TIMEOUT=100
     VDD_VALUE=3300)
 

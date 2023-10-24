@@ -31,7 +31,6 @@ int main()
     {
         if ((sysTick.Tick() - timer) >= 2000u)
         {
-            timer = sysTick.Tick();
             for (u_int16_t i = 0; i < 4; ++i)
             {
                 LL_GPIO_TogglePin(STATUS_LED_PORT, STATUS_LED_PIN);
@@ -39,6 +38,7 @@ int main()
             }
             ++s_Watch;
             printf_("Blink Count: %i\n", s_Watch);
+            timer = sysTick.Tick();
         }
         while (serial.Size())
         {

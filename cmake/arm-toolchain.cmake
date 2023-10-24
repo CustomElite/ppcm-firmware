@@ -3,7 +3,7 @@ set(CMAKE_SYSTEM_VERSION 1)
 set(CMAKE_SYSTEM_NAME Generic)
 set(CMAKE_SYSTEM_PROCESSOR arm)
 
-set(C_FLAGS "-ffunction-sections -fdata-sections -ffreestanding -fmessage-length=0 -specs=nano.specs -specs=nosys.specs")
+set(C_FLAGS "-ffunction-sections -fdata-sections -ffreestanding -fmessage-length=0 -specs=nano.specs")
 set(CPP_FLAGS "-fno-threadsafe-statics -fno-rtti -fno-exceptions -fno-use-cxa-atexit -Wno-volatile")
 
 set(TOOLCHAIN_PREFIX arm-none-eabi)

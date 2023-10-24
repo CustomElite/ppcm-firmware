@@ -89,19 +89,20 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC
 target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     ${CPU_FLAGS}
     ${WFLAGS}
+    -flto
     $<$<COMPILE_LANGUAGE:CXX>:
         -Wno-register
         -ftemplate-backtrace-limit=0>
     $<$<CONFIG:Debug>: -g -O0 -g3 -ggdb>
-    $<$<CONFIG:Release>: -Os>)
+    $<$<CONFIG:Release>: -Os>
+    $<$<CONFIG:RelWithDebInfo>: -g -O2 -g2 -ggdb>)
 
 # Linker options
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
     -T${LINKER_SCRIPT}
     ${CPU_FLAGS}
-    -lc
+    -flto
     -lm
-    -lnosys
     -Wl,--gc-sections
     -Wl,-Map=${CMAKE_PROJECT_NAME}.map,--cref
     -Wl,--print-memory-usage)

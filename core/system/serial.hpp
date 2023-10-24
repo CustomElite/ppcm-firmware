@@ -64,7 +64,7 @@ namespace System
 
     private:
         using buffer_t = etl::queue_spsc_atomic<char, 64u, etl::memory_model::MEMORY_MODEL_SMALL>;
-        using interrupt_t = System::Interrupt<Serial, InterruptSource::eUSART1, 2u>;
+        using interrupt_t = System::Interrupt<Serial, InterruptSource::eUSART1, 5u>;
         using delegate_t = interrupt_t::delegate_t;
 
     private:

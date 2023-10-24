@@ -5,11 +5,12 @@
 
 #include "printf.h"
 
+#include <etl/singleton.h>
 #include <stdint.h>
 
-static int watch = 0;
-auto& serial = System::Serial::Get();
-Peripheral::SysTickModule sysTick(1000u);
+using serial_t = etl::singleton<System::Serial>;
+
+static uint16_t s_Watch = 0;
 
 int main()
 {
@@ -18,7 +19,12 @@ int main()
     MCU::Clock_Init();
     MCU::GPIO_Init();
 
-    etl::singleton<System::Serial>::create(USART1, 57600u);
+    serial_t::create(USART1, 57600u);
+    auto& serial = serial_t::instance();
+
+    Peripheral::SysTickModule sysTick(1000u);
+
+
     uint16_t timer{0};
 
     while (1) 
@@ -30,14 +36,13 @@ int main()
             {
                 LL_GPIO_TogglePin(STATUS_LED_PORT, STATUS_LED_PIN);
                 sysTick.Wait(150u);
-                ++watch;
-                printf_("Blink Count: %i\n", watch);
             }
-
+            ++s_Watch;
+            printf_("Blink Count: %i\n", s_Watch);
         }
         while (serial.Size())
         {
-            serial.Transmit(serial.Read().value_or(0));
+            serial.WriteC(serial.Read().value_or(0));
         }
     }
     
@@ -46,5 +51,6 @@ int main()
 
 void putchar_(char c)
 {
-    serial.Transmit(c);
+    auto& serial = serial_t::instance();
+    serial.WriteC(c);
 }

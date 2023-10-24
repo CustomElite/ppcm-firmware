@@ -1,5 +1,6 @@
 #pragma once
 
+#include <etl/private/delegate_cpp11.h>
 #include <stdint.h>
 
 #include "interrupt.hpp"
@@ -9,11 +10,16 @@ namespace Peripheral
     class SysTickModule
     {
     private:
+        using interrupt_t = System::Interrupt<SysTickModule, System::InterruptSource::eSysTick, 0>;
+        using delegate_t = interrupt_t::delegate_t;
+
         inline static volatile uint64_t m_count = 0;
-        System::Interrupt<SysTickModule, System::InterruptSource::eSysTick> m_interrupt;
+
+        interrupt_t m_interrupt;
 
     public:
         SysTickModule(const uint32_t frequency) noexcept
+            : m_interrupt{ delegate_t::create<SysTickModule::Interrupt>() }
         {
             SysTick->LOAD = static_cast<uint32_t>((SystemCoreClock / frequency) - 1ull);
             SysTick->VAL = 0ul;

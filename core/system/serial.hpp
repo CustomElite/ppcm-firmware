@@ -1,5 +1,6 @@
 #pragma once
 
+#include <etl/private/delegate_cpp11.h>
 #include <optional>
 #include <stddef.h>
 
@@ -27,15 +28,17 @@ namespace System
 
     public:
         Serial(USART_TypeDef* instance, size_t baud_rate = 9600u) noexcept
-            : m_usart{ instance }
+            : m_usart{ instance },
+            m_isr{ delegate_t::create<Serial, &Serial::Interrupt>(*this) },
+            m_rxBuffer{}
         {
             if (m_usart == USART1)
                 configure(baud_rate);
         }
 
-        void Transmit(char input) const noexcept
+        void WriteC(char input) const noexcept
         {
-            
+            transmit_byte(input);
         }
         std::optional<char> Read() noexcept
         {
@@ -53,22 +56,21 @@ namespace System
         {
             return m_rxBuffer.empty();
         }
-        static void Interrupt() noexcept
+        void Interrupt() noexcept
         {
-            if (LL_USART_IsActiveFlag_RXNE(Get().m_usart))
-                Get().m_rxBuffer.push(LL_USART_ReceiveData8(Get().m_usart));
+            if (LL_USART_IsActiveFlag_RXNE(m_usart))
+                m_rxBuffer.push(LL_USART_ReceiveData8(m_usart));
         }
 
     private:
         using buffer_t = etl::queue_spsc_atomic<char, 64u, etl::memory_model::MEMORY_MODEL_SMALL>;
-        using interrupt_t = ::System::Interrupt<Serial, InterruptSource::eUSART1>;
-
-        inline static Serial* m_instance{ nullptr };
+        using interrupt_t = System::Interrupt<Serial, InterruptSource::eUSART1, 2u>;
+        using delegate_t = interrupt_t::delegate_t;
 
     private:
         USART_TypeDef* m_usart;
-        buffer_t m_rxBuffer{};
-        interrupt_t m_interrupt;
+        interrupt_t m_isr;
+        buffer_t m_rxBuffer;
 
     private:
         void configure(size_t baud_rate) const noexcept
@@ -95,7 +97,7 @@ namespace System
 
             LL_USART_Enable(USART1);
         }
-        void transmit_byte(const uint8_t data) const noexcept
+        inline void transmit_byte(const uint8_t data) const noexcept
         {
             while (!LL_USART_IsActiveFlag_TXE(m_usart));
             LL_USART_TransmitData8(m_usart, data);

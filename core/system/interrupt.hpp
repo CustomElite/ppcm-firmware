@@ -1,7 +1,9 @@
 #pragma once
 
+#include <etl/private/delegate_cpp11.h>
 #include <stddef.h>
 #include <type_traits>
+#include <utility>
 
 #include "macros.h"
 #include "stm32f103xb.h"
@@ -74,68 +76,59 @@ namespace System
     }
 
     template <typename Key>
-    class Dispatcher
+    class InterruptDelegateService
     {
     public:
-        using dispatch_func_t = void(*)();
+        using delegate_t = etl::delegate<void(void)>;
 
-        ALWAYS_INLINE static void Dispatch() noexcept
+        ALWAYS_INLINE static void Call_ISR() noexcept
         {
-            if (m_func) m_func();
+            m_ISR.call_if();
         }
 
     protected:
-        ALWAYS_INLINE static bool RegisterCallback(dispatch_func_t callback) noexcept
+        ALWAYS_INLINE static void RegisterISR(delegate_t isr_delegate) noexcept
         {
-            if (!m_func)
-            {
-                m_func = callback;
-                return true;
-            }
-            
-            return false;
+            if (!m_ISR.is_valid())
+                m_ISR = isr_delegate;
         }
-        ALWAYS_INLINE static bool UnregisterCallback() noexcept
+        ALWAYS_INLINE static void UnregisterISR() noexcept
         {
-            m_func = nullptr;
-            return true;
+            m_ISR.clear();
         }
-        ALWAYS_INLINE static bool IsRegistered() noexcept
+        ALWAYS_INLINE static bool IsValid() noexcept
         {
-            return (m_func != nullptr);
+            return m_ISR.is_valid();
         }
     private:
-        inline static dispatch_func_t m_func{ nullptr };
+        inline static delegate_t m_ISR{};
     };
 
     template <InterruptSource Source>
-    using InterruptDispatch = Dispatcher<typename std::integral_constant<InterruptSource, Source>::type>;
+    using InterruptDelegate = InterruptDelegateService<typename std::integral_constant<InterruptSource, Source>::type>;
 
     template <typename T, InterruptSource Source, uint8_t Priority = 5u>
-    struct Interrupt : InterruptDispatch<Source>
+    class Interrupt : InterruptDelegate<Source>
     {
-        using base_t = InterruptDispatch<Source>;
-        using callback_t = typename base_t::dispatch_func_t;
+    public:
+        using interrupt_t = InterruptDelegate<Source>;
+        using delegate_t = typename interrupt_t::delegate_t;
 
-        ALWAYS_INLINE Interrupt(callback_t callback) noexcept
+        ALWAYS_INLINE Interrupt(delegate_t isr_delegate) noexcept
         {
-            if (!base_t::IsRegistered())
+            if (!interrupt_t::IsValid())
             {
                 __NVIC_SetPriority((IRQn_Type)Source, NVIC_EncodePriority(__NVIC_GetPriorityGrouping(), Priority, 0));
 
                 if constexpr (IsEnablable<Source>())
                     __NVIC_EnableIRQ((IRQn_Type)Source);
 
-                base_t::RegisterCallback(callback);
+                interrupt_t::RegisterISR(isr_delegate);
             }
         }
-        ALWAYS_INLINE Interrupt() noexcept
-            : Interrupt{ &T::Interrupt }
-        {}
         ALWAYS_INLINE ~Interrupt() noexcept
         {
-            base_t::UnregisterCallback();
-
+            interrupt_t::UnregisterISR();
             if constexpr (IsEnablable<Source>())
                 __NVIC_DisableIRQ((IRQn_Type)Source);
         }

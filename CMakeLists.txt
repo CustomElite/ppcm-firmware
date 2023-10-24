@@ -15,15 +15,17 @@ set(STM32_MCU STM32F103xB)
 set(STM32_FAMILY STM32F1xx)
 
 # Linker script
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/linker_stm32f1c8tx.ld)
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/mcu/linker_stm32f1c8tx.ld)
 # ST startup script
-set(STARTUP_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/startup_stm32f103xb.s)
+set(STARTUP_SCRIPT ${CMAKE_SOURCE_DIR}/mcu/startup_stm32f103xb.s)
 
 add_subdirectory(libs/etl)
+#add_subdirectory(drivers)
 
 set(PROJECT_INCLUDE_DIR
     core/include
-    core/peripherals)
+    core/peripherals
+    core/system)
 
 set(DRIVER_INCLUDE_DIR 
     drivers/CMSIS/include
@@ -38,10 +40,11 @@ file(GLOB_RECURSE PROJECT_SRC CONFIGURE_DEPENDS
     core/src/*.c
     core/src/*.cpp)
 
-file(GLOB_RECURSE DRIVER_SRC
-    drivers/*.c)
+file(GLOB DRIVER_SRC
+    drivers/CMSIS/st/src/*.c
+    drivers/${STM32_FAMILY}/src/*.c)
 
-file(GLOB_RECURSE LIBS_SRC
+file(GLOB LIBS_SRC
     ${LIBS_DIR}/*.c)
 
 # CPU Flags
@@ -51,59 +54,67 @@ set(CPU_FLAGS -march=armv7-m -mcpu=cortex-m3 -mthumb) #-mlittle-endian
 set(WFLAGS
     -Wall
     -Wextra
-    -Wunused-variable
     -Wshadow)
+    #-Wunused-variable | for my code only
 
-add_executable(${PROJECT_NAME}
+add_executable(${CMAKE_PROJECT_NAME}
     ${PROJECT_SRC}
     ${DRIVER_SRC}
     ${LIBS_SRC}
     ${STARTUP_SCRIPT})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE etl::etl)
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
+    etl)
 
 # Include directories
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     ${PROJECT_INCLUDE_DIR}
     ${DRIVER_INCLUDE_DIR}
     ${LIBS_DIR})
 
 # Compiled definitions
-target_compile_definitions(${PROJECT_NAME} PRIVATE
+target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC
     ${STM32_MCU}
     USE_FULL_LL_DRIVER
+    VDD_VALUE=3300
+    HSI_VALUE=8000000
+    HSE_VALUE=8000000
     HSE_STARTUP_TIMEOUT=100
-    VDD_VALUE=3300)
+    LSI_VALUE=40000
+    LSE_VALUE=32768
+    LSE_STARTUP_TIMEOUT=5000
+    PREFETCH_ENABLE=1)
 
 # Compiler options
-target_compile_options(${PROJECT_NAME} PRIVATE
+target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
     ${CPU_FLAGS}
     ${WFLAGS}
     $<$<COMPILE_LANGUAGE:CXX>:
         -Wno-register
         -ftemplate-backtrace-limit=0>
-    $<$<CONFIG:Debug>: -g -Og -g3 -ggdb>
-    $<$<CONFIG:Release>: -Os -g0>)
+    $<$<CONFIG:Debug>: -g -O0 -g3 -ggdb>
+    $<$<CONFIG:Release>: -Os>)
 
 # Linker options
-target_link_options(${PROJECT_NAME} PRIVATE
+target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
     -T${LINKER_SCRIPT}
     ${CPU_FLAGS}
     -lc
     -lm
+    -lnosys
     -Wl,--gc-sections
-    -Wl,-Map=${PROJECT_NAME}.map,--cref
+    -Wl,-Map=${CMAKE_PROJECT_NAME}.map,--cref
     -Wl,--print-memory-usage)
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${PROJECT_NAME}>)
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_SIZE} $<TARGET_FILE:${CMAKE_PROJECT_NAME}>)
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${PROJECT_NAME}>
-    ${PROJECT_NAME}.hex
-    COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${PROJECT_NAME}>
-    ${PROJECT_NAME}.bin)
+add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
+    ${CMAKE_PROJECT_NAME}.hex
+    COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
+    ${CMAKE_PROJECT_NAME}.bin)
 
-add_custom_target(FLASH DEPENDS ${PROJECT_NAME})
+add_custom_target(FLASH DEPENDS ${CMAKE_PROJECT_NAME})
 add_custom_command(TARGET FLASH USES_TERMINAL
-    COMMAND openocd -f interface/stlink.cfg -f target/stm32f1x.cfg -c "program $<TARGET_FILE:${PROJECT_NAME}> verify reset exit")
+    COMMAND openocd -f interface/stlink.cfg -f target/stm32f1x.cfg -c "program $<TARGET_FILE:${CMAKE_PROJECT_NAME}> verify reset exit")

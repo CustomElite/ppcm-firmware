@@ -1,7 +1,14 @@
 #pragma once
 
+#include "stm32f1xx_ll_rcc.h"
+#include "stm32f1xx_ll_bus.h"
+#include "stm32f1xx_ll_exti.h"
+#include "stm32f1xx_ll_utils.h"
+#include "stm32f1xx_ll_system.h"
+#include "stm32f1xx_ll_cortex.h"
 #include "stm32f1xx_ll_exti.h"
 #include "stm32f1xx_ll_gpio.h"
+#include "stm32f1xx_ll_usart.h"
 
 #define STATUS_LED_PIN 	    LL_GPIO_PIN_13
 #define STATUS_LED_PORT 	GPIOC
@@ -23,5 +30,8 @@
 #define DAC_SYNC_PIN        LL_GPIO_PIN_10
 #define DAC_SYNC_PORT       GPIOB
 
-void SysClock_Init() noexcept;
-void GPIO_Init() noexcept;
+namespace MCU
+{
+    void Clock_Init() noexcept;
+    void GPIO_Init() noexcept;
+}

@@ -9,6 +9,3 @@
   #define NVIC_PRIORITYGROUP_3    ((uint32_t)0x00000004)     /*!< 3 bits for pre-emption priority, 1 bit  for subpriority */
   #define NVIC_PRIORITYGROUP_4    ((uint32_t)0x00000003)     /*!< 4 bits for pre-emption priority, 0 bit  for subpriority */
 #endif
-
-#define LED_PIN     LL_GPIO_PIN_13
-#define LED_PORT    GPIOC

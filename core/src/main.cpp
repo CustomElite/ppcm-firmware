@@ -1,37 +1,50 @@
 #include "main.h"
-#include "peripherals.h"
-#include "etl/vector.h"
+#include "mcu.h"
+#include "serial.hpp"
+#include "sys_tick.hpp"
 
-#include "stm32f1xx_ll_rcc.h"
-#include "stm32f1xx_ll_bus.h"
-#include "stm32f1xx_ll_exti.h"
-#include "stm32f1xx_ll_utils.h"
-#include "stm32f1xx_ll_system.h"
-#include "stm32f1xx_ll_cortex.h"
-#include <stddef.h>
+#include "printf.h"
+
+#include <stdint.h>
+
+static int watch = 0;
+auto& serial = System::Serial::Get();
+Peripheral::SysTickModule sysTick(1000u);
 
 int main()
 {
-    LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_AFIO);
-    LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_PWR);
-    NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+    __NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
 
-    etl::vector<size_t, 8> vec{200, 500, 750, 1000, 1500, 2000, 3000, 5000};
+    MCU::Clock_Init();
+    MCU::GPIO_Init();
 
-    SysClock_Init();
-    GPIO_Init();
+    etl::singleton<System::Serial>::create(USART1, 57600u);
+    uint16_t timer{0};
 
     while (1) 
     {
-        for (auto& v : vec)
+        if ((sysTick.Tick() - timer) >= 2000u)
         {
-            for (size_t i = 0; i < 6; ++i)
+            timer = sysTick.Tick();
+            for (u_int16_t i = 0; i < 4; ++i)
             {
                 LL_GPIO_TogglePin(STATUS_LED_PORT, STATUS_LED_PIN);
-                LL_mDelay(v);
+                sysTick.Wait(150u);
+                ++watch;
+                printf_("Blink Count: %i\n", watch);
             }
+
+        }
+        while (serial.Size())
+        {
+            serial.Transmit(serial.Read().value_or(0));
         }
     }
     
     return 0;
+}
+
+void putchar_(char c)
+{
+    serial.Transmit(c);
 }

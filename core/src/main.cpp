@@ -34,7 +34,6 @@ int main()
     {
         if ((sysTick.Tick() - timer) >= 2000u)
         {
-            //LL_GPIO_TogglePin(STATUS_LED_PORT, STATUS_LED_PIN);
             led = GPIO::OutputState::Low;
             sysTick.Wait(250u);
             led = GPIO::OutputState::High;

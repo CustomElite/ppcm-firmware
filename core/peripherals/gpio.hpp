@@ -5,7 +5,7 @@
 #include "macros.h"
 #include "meta_tools.hpp"
 
-#include "stm32f103xb.h"
+//#include "stm32f103xb.h"
 #include "stm32f1xx.h"
 //#include "stm32f1xx_ll_gpio.h"
 
@@ -99,19 +99,13 @@ namespace Peripheral::GPIO
         static constexpr std::uint32_t cr_offset = (pin > 7u) ? 4u : 0;
         static constexpr std::uint32_t cr_shift = ((pin % 8u) * 4u);
 
-        inline static volatile std::uint32_t* const PortReg = (std::uint32_t*)(BaseAddress + (AddrOffset * General::EnumValue(port)));
-
-        ALWAYS_INLINE static constexpr GPIO_TypeDef* GPIOx() noexcept
+        ALWAYS_INLINE static constexpr std::uint32_t* GPIOx() noexcept
         {
-            return (GPIO_TypeDef*)(GPIOA_BASE + (AddrOffset * General::EnumValue(port)));
-        }
-        ALWAYS_INLINE static constexpr GPIO_TypeDef* CRx() noexcept
-        {
-            return (GPIOx() + cr_offset);
+            return (std::uint32_t*)(BaseAddress + (AddrOffset * General::EnumValue(port)));
         }
         ALWAYS_INLINE static void Set(Mode input) noexcept
         {
-            volatile std::uint32_t* const CRx = (std::uint32_t*)((std::uint32_t)(GPIOx()) + cr_offset);
+            auto CRx = (volatile std::uint32_t* const)((std::uint32_t)(GPIOx()) + cr_offset);
 
             auto tmp = *CRx;
             tmp &= ~((0b1111) << cr_shift);

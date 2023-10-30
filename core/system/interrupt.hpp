@@ -69,6 +69,39 @@ namespace System
         eUSBWakeUp = USBWakeUp_IRQn      
     };
 
+    #if 0
+    template <typename Key>
+    class InterruptDelegateService
+    {
+    public:
+        typedef void(*delegate_t)();
+
+        InterruptDelegateService() noexcept = default;
+
+        ALWAYS_INLINE static void Call_ISR() noexcept
+        {
+            if (m_ISR) m_ISR();
+        }
+
+    protected:
+        ALWAYS_INLINE static void RegisterISR(delegate_t isr_delegate) noexcept
+        {
+            if (!m_ISR)
+                m_ISR = isr_delegate;
+        }
+        ALWAYS_INLINE static void UnregisterISR() noexcept
+        {
+            m_ISR = nullptr;
+        }
+        ALWAYS_INLINE static bool IsValid() noexcept
+        {
+            return (m_ISR != nullptr);
+        }
+    private:
+        inline static delegate_t m_ISR{ nullptr };
+    };
+#endif
+
     template <InterruptSource Source>
     constexpr bool IsEnablable() noexcept
     {
@@ -76,61 +109,68 @@ namespace System
     }
 
     template <typename Key>
-    class InterruptDelegateService
+    class iInterruptDelegator
     {
     public:
         using delegate_t = etl::delegate<void(void)>;
 
-        ALWAYS_INLINE static void Call_ISR() noexcept
+        ALWAYS_INLINE static void Call() noexcept
         {
-            m_ISR.call_if();
+            m_delegate.call_if();
         }
 
     protected:
-        ALWAYS_INLINE static void RegisterISR(delegate_t isr_delegate) noexcept
+        ALWAYS_INLINE static bool Register(delegate_t isr_delegate) noexcept
         {
-            if (!m_ISR.is_valid())
-                m_ISR = isr_delegate;
+            if (m_delegate.is_valid()) return false;
+
+            m_delegate = isr_delegate;
+            return true;
         }
-        ALWAYS_INLINE static void UnregisterISR() noexcept
+        ALWAYS_INLINE static void Unregister() noexcept
         {
-            m_ISR.clear();
+            m_delegate.clear();
         }
         ALWAYS_INLINE static bool IsValid() noexcept
         {
-            return m_ISR.is_valid();
+            return m_delegate.is_valid();
         }
     private:
-        inline static delegate_t m_ISR{};
+        inline static delegate_t m_delegate{};
     };
 
     template <InterruptSource Source>
-    using InterruptDelegate = InterruptDelegateService<typename std::integral_constant<InterruptSource, Source>::type>;
+    using InterruptDelegator = iInterruptDelegator<typename std::integral_constant<InterruptSource, Source>::type>;
 
     template <typename T, InterruptSource Source, uint8_t Priority = 5u>
-    class Interrupt : InterruptDelegate<Source>
+    class Interrupt : InterruptDelegator<Source>
     {
     public:
-        using interrupt_t = InterruptDelegate<Source>;
-        using delegate_t = typename interrupt_t::delegate_t;
+        using base_t = InterruptDelegator<Source>;
+        using delegate_t = typename base_t::delegate_t;
 
         ALWAYS_INLINE Interrupt(delegate_t isr_delegate) noexcept
         {
-            if (!interrupt_t::IsValid())
+            if (base_t::Register(isr_delegate))
             {
-                __NVIC_SetPriority((IRQn_Type)Source, NVIC_EncodePriority(__NVIC_GetPriorityGrouping(), Priority, 0));
-
                 if constexpr (IsEnablable<Source>())
+                {
+                    __NVIC_SetPriority((IRQn_Type)Source, NVIC_EncodePriority(__NVIC_GetPriorityGrouping(), Priority, 0));
                     __NVIC_EnableIRQ((IRQn_Type)Source);
-
-                interrupt_t::RegisterISR(isr_delegate);
+                }
             }
         }
+        ALWAYS_INLINE Interrupt() noexcept
+            : Interrupt{ delegate_t::template create<T::Interrupt>() } 
+        {}
         ALWAYS_INLINE ~Interrupt() noexcept
         {
-            interrupt_t::UnregisterISR();
-            if constexpr (IsEnablable<Source>())
-                __NVIC_DisableIRQ((IRQn_Type)Source);
+            if (base_t::IsValid())
+            {
+                base_t::Unregister();
+                if constexpr (IsEnablable<Source>())
+                    __NVIC_DisableIRQ((IRQn_Type)Source);
+            }
         }
     };
 }

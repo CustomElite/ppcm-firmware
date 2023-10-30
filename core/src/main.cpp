@@ -1,14 +1,17 @@
 #include "main.h"
 #include "mcu.h"
 #include "serial.hpp"
+#include "gpio.hpp"
 #include "sys_tick.hpp"
 
 #include "printf.h"
-
 #include <etl/singleton.h>
 #include <stdint.h>
 
+using namespace Peripheral;
+
 using serial_t = etl::singleton<System::Serial>;
+using STATUS_LED = GPIO::GPIO_Module<GPIO::Port::C, 13>;
 
 static uint16_t s_Watch = 0;
 
@@ -22,22 +25,25 @@ int main()
     serial_t::create(USART1, 57600u);
     auto& serial = serial_t::instance();
 
-    Peripheral::SysTickModule sysTick(1000u);
+    SysTickModule sysTick(1000u);
+    STATUS_LED led{GPIO::Mode::Output};
 
-
-    uint16_t timer{0};
+    uint64_t timer{0};
 
     while (1) 
     {
         if ((sysTick.Tick() - timer) >= 2000u)
         {
-            for (u_int16_t i = 0; i < 4; ++i)
-            {
-                LL_GPIO_TogglePin(STATUS_LED_PORT, STATUS_LED_PIN);
-                sysTick.Wait(150u);
-            }
+            //LL_GPIO_TogglePin(STATUS_LED_PORT, STATUS_LED_PIN);
+            led = GPIO::OutputState::Low;
+            sysTick.Wait(250u);
+            led = GPIO::OutputState::High;
+            sysTick.Wait(250u);
+            led = GPIO::OutputState::Low;
+            sysTick.Wait(250u);
+            led = GPIO::OutputState::High;
+            sysTick.Wait(250u);
             ++s_Watch;
-            printf_("Blink Count: %i\n", s_Watch);
             timer = sysTick.Tick();
         }
         while (serial.Size())

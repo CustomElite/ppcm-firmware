@@ -18,7 +18,7 @@
             "hidden": true,
             "inherits": "common",
             "description": "Sets arm-none-eabi toolchain",
-            "toolchainFile": "${sourceDir}/cmake/arm-toolchain.cmake",
+            "toolchainFile": "${sourceDir}/cmake/arm-none-eabi-gcc.cmake",
             "cacheVariables": {
                 "CMAKE_C_COMPILER_WORKS": true,
                 "CMAKE_CXX_COMPILER_WORKS": true

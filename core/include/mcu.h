@@ -10,8 +10,8 @@
 #include "stm32f1xx_ll_gpio.h"
 #include "stm32f1xx_ll_usart.h"
 
-#define STATUS_LED_PIN 	    LL_GPIO_PIN_13
-#define STATUS_LED_PORT 	GPIOC
+//#define STATUS_LED_PIN 	    LL_GPIO_PIN_13
+//#define STATUS_LED_PORT 	GPIOC
 
 #define ADC_RX_DMA_CHANNEL  LL_DMA_CHANNEL_4
 #define ADC_RX_DMA_IRQn     DMA1_Channel4_IRQn

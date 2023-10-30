@@ -11,15 +11,11 @@ namespace Peripheral
     {
     private:
         using interrupt_t = System::Interrupt<SysTickModule, System::InterruptSource::eSysTick, 1u>;
-        using delegate_t = interrupt_t::delegate_t;
 
         inline static volatile uint64_t m_count = 0;
 
-        interrupt_t m_interrupt;
-
     public:
         SysTickModule(const uint32_t frequency) noexcept
-            : m_interrupt{ delegate_t::create<SysTickModule::Interrupt>() }
         {
             SysTick->LOAD = static_cast<uint32_t>((SystemCoreClock / frequency) - 1ull);
             SysTick->VAL = 0ul;
@@ -42,6 +38,9 @@ namespace Peripheral
         {
             Increment();
         }
+    
+    private:
+        const interrupt_t m_interrupt{};
     };
 
 }

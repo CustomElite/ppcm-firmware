@@ -24,6 +24,7 @@ add_subdirectory(libs/etl)
 
 set(PROJECT_INCLUDE_DIR
     core/include
+    core/general
     core/peripherals
     core/system)
 
@@ -36,7 +37,7 @@ set(LIBS_DIR
     libs/printf)
 
 # Source files
-file(GLOB_RECURSE PROJECT_SRC CONFIGURE_DEPENDS
+file(GLOB PROJECT_SRC CONFIGURE_DEPENDS
     core/src/*.c
     core/src/*.cpp)
 
@@ -48,7 +49,7 @@ file(GLOB LIBS_SRC
     ${LIBS_DIR}/*.c)
 
 # CPU Flags
-set(CPU_FLAGS -march=armv7-m -mcpu=cortex-m3 -mthumb) #-mlittle-endian
+set(CPU_FLAGS -march=armv7-m -mcpu=cortex-m3 -mthumb -mfloat-abi=soft) #-mlittle-endian
 
 # Warning flags
 set(WFLAGS
@@ -86,7 +87,7 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC
     PREFETCH_ENABLE=1)
 
 # Compiler options
-target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
+target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
     ${CPU_FLAGS}
     ${WFLAGS}
     -flto
@@ -101,9 +102,7 @@ target_compile_options(${CMAKE_PROJECT_NAME} PUBLIC
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
     -T${LINKER_SCRIPT}
     ${CPU_FLAGS}
-    -flto
     -lm
-    -Wl,--gc-sections
     -Wl,-Map=${CMAKE_PROJECT_NAME}.map,--cref
     -Wl,--print-memory-usage)
 

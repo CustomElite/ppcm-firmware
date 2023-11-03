@@ -1,159 +1,143 @@
 #pragma once
 
-#include <cstdint>
-
+#include "gpio.hpp"
 #include "macros.h"
-#include "meta_tools.hpp"
+#include "tools.hpp"
 
-//#include "stm32f103xb.h"
-#include "stm32f1xx.h"
-//#include "stm32f1xx_ll_gpio.h"
+#include "gpio_registers.hpp"
 
 namespace Peripheral::GPIO 
 {
-    static constexpr std::uint32_t BaseAddress = 0x040010800;
-    static constexpr std::uint32_t AddrOffset  = 0x000000400;
-
-    enum class Port : std::uint32_t
+    enum class Port : uint8_t
     {
-        A = 0,
+        A = 0u,
         B,
         C,
         D,
         E
     };
-    enum class OutputState : bool
+    enum class State : bool
     {
         Low = false,
         High = true
     };
-    enum class Mode : std::uint32_t
+    enum class Input : uint8_t
     {
-        Analog = 0,
-        Output = 0b0001,
-        Floating = 0b0100,
-        Input = 0b1000,
-        Alternate = 0b1001
+        Analog = 0u,
+        Floating,
+        PullResistor
     };
-    enum class OutputType : std::uint32_t
-    {
-        PushPull = 0,
-        OpenDrain = 0b01
-    };
-    enum class OutputSpeed : std::uint32_t
-    {
-        Medium = 0b01,
-        Low = 0b10,
-        High = 0b11
-    };
-    enum class InputResistors : std::uint16_t
+    enum class InputResistor : uint8_t
     {
         PullDown = 0,
-        PullUp = 0b1
+        PullUp
+    };
+    enum class PushPull : uint8_t
+    {
+        _10MHz = 1u,
+        _2MHz,
+        _50MHz
+    };
+    enum class OpenDrain : uint8_t
+    {
+        _10MHz = 1u,
+        _2MHz,
+        _50MHz
+    };
+    enum class Alternate : uint8_t
+    {
+        PushPull = 2u,
+        OpenDrain
     };
 
-    template <Port port, std::uint8_t pin>
-    class GPIO_Module
+    template <Port port, uint8_t pin>
+    class Module
     {
     public:
         static_assert((pin >= 0) && (pin <= 15u), "Pin number does not exist. Only pins 0-15 are valid.");
 
         template <typename... Args>
-        ALWAYS_INLINE GPIO_Module(Args... args) noexcept
+        ALWAYS_INLINE Module(Args... args) noexcept
         {
             RCC->APB2ENR |= clk_msk;
             Configure(args ...);
         }
-        ~GPIO_Module() noexcept
+        ~Module() noexcept
         {
-            RCC->APB2ENR &= ~clk_msk;
+            RCC->APB2RSTR |= clk_msk;
+            RCC->APB2RSTR &= ~clk_msk;
         }
         template <typename T>
-        ALWAYS_INLINE GPIO_Module& operator=(T input) noexcept
+        ALWAYS_INLINE Module& operator = (T input) noexcept
         {
             Set(input);
             return *this;
         }
-        ALWAYS_INLINE GPIO_Module& operator=(const bool input) noexcept
+        ALWAYS_INLINE Module& operator = (const bool input) noexcept
         {
-            Set((OutputState)input);
+            Set((State)input);
             return *this;
         }
         ALWAYS_INLINE static void Write(bool input) noexcept
         {
-            Set((OutputState)input);
+            Set((State)input);
         }
-        ALWAYS_INLINE static void Write(OutputState input) noexcept
+        ALWAYS_INLINE static void Write(State input) noexcept
         {
             Set(input);
+        }
+        ALWAYS_INLINE static void Toggle() noexcept
+        {
+
         }
         template <typename... Args>
         ALWAYS_INLINE static void Configure(Args... args) noexcept
         {
-            ( GPIO_Module::Set(args), ... );
+            ( Set(args), ... );
         }
 
     private:
-        static constexpr std::uint32_t clk_msk = (1u << ((General::EnumValue(port)) + 2u));
-        static constexpr std::uint32_t pin_msk = (1u << pin);
-        static constexpr std::uint32_t cr_offset = (pin > 7u) ? 4u : 0;
-        static constexpr std::uint32_t cr_shift = ((pin % 8u) * 4u);
+        using REGS = RegisterMap::GPIOx<General::EnumValue(port), pin>;
+        using CRx = typename REGS::CRx_t;
+        using IDR = typename REGS::IDR_t;
+        using ODR = typename REGS::ODR_t;
+        using BSRR = typename REGS::BSRR_t;
+        using BRR = typename REGS::BRR_t;
+        using LCKR = typename REGS::LCKR_t;
 
-        ALWAYS_INLINE static constexpr std::uint32_t* GPIOx() noexcept
+        constexpr static uint32_t clk_msk = (1u << (General::EnumValue(port) + 2u));
+
+        ALWAYS_INLINE static void Set(Input input) noexcept
         {
-            return (std::uint32_t*)(BaseAddress + (AddrOffset * General::EnumValue(port)));
+            CRx().MODE() = false;
+            CRx().CNF() = General::EnumValue(input);
         }
-        ALWAYS_INLINE static void Set(Mode input) noexcept
+        ALWAYS_INLINE static void Set(PushPull input) noexcept
         {
-            auto CRx = (volatile std::uint32_t* const)((std::uint32_t)(GPIOx()) + cr_offset);
-
-            auto tmp = *CRx;
-            tmp &= ~((0b1111) << cr_shift);
-            tmp |= (General::EnumValue(input) << cr_shift);
-
-            *CRx = tmp;
+            CRx().MODE() = General::EnumValue(input);
+            CRx().CNF() = false;
         }
-        ALWAYS_INLINE static void Set(OutputType input) noexcept
+        ALWAYS_INLINE static void Set(OpenDrain input) noexcept
         {
-            volatile std::uint32_t* const CRx = (std::uint32_t*)((std::uint32_t)(GPIOx()) + cr_offset);
-
-            auto tmp = *CRx;
-            tmp &= ~(0b1100 << cr_shift);
-            tmp |= ((General::EnumValue(input) << GPIO_CRL_CNF_Pos) << cr_shift);
-            
-            *CRx = tmp;
+            CRx().MODE() = General::EnumValue(input);
+            CRx().CNF() = true;
         }
-        ALWAYS_INLINE static void Set(OutputSpeed input) noexcept
+        ALWAYS_INLINE static void Set(Alternate input) noexcept
         {
-            volatile std::uint32_t* const CRx = (std::uint32_t*)((std::uint32_t)(GPIOx()) + cr_offset);
-
-            auto tmp = *CRx;
-            tmp &= ~(0b0011 << cr_shift);
-            tmp |= (General::EnumValue(input) << cr_shift);
-            
-            *CRx = tmp;
+            CRx().MODE() = true;
+            CRx().CNF() = General::EnumValue(input);
         }
-        ALWAYS_INLINE static void Set(InputResistors input) noexcept
+        ALWAYS_INLINE static void Set(InputResistor input) noexcept
         {
-            volatile std::uint32_t* const ODR = (std::uint32_t*)((std::uint32_t)(GPIOx()) + 12u);
-
-            auto tmp = *ODR;
-            tmp &= ~pin_msk;
-            tmp |= (General::EnumValue(input) << pin);
-            
-            *ODR = tmp;
+            ODR().OD() = General::EnumValue(input);
         }
         ALWAYS_INLINE static void Set(bool input) noexcept
         {
-            volatile std::uint32_t* const BSRR = (std::uint32_t*)((std::uint32_t)(GPIOx()) + 16u);
-            volatile std::uint32_t* const BRR = (std::uint32_t*)((std::uint32_t)(GPIOx()) + 20u);
-
-            if (input) { *BSRR = pin_msk; }
-            else { *BRR = pin_msk; }
+            BSRR() = input;
         }
-        ALWAYS_INLINE static void Set(OutputState input) noexcept
+        ALWAYS_INLINE static void Set(State input) noexcept
         {
-            Set(input == OutputState::High);
+            Set(input == State::High);
         }
     };
 }

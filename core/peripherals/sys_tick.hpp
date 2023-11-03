@@ -1,9 +1,8 @@
 #pragma once
 
-#include <etl/private/delegate_cpp11.h>
-#include <stdint.h>
-
 #include "interrupt.hpp"
+
+#include <etl/private/delegate_cpp11.h>
 
 namespace Peripheral 
 {

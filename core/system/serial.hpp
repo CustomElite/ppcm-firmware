@@ -1,20 +1,18 @@
 #pragma once
 
-#include <etl/private/delegate_cpp11.h>
-#include <optional>
-#include <stddef.h>
-
-#include <etl/singleton.h>
-#include <etl/memory_model.h>
-#include <etl/queue_spsc_atomic.h>
-#include <stdint.h>
-
+#include "gpio.hpp"
 #include "interrupt.hpp"
 
 #include "stm32f1xx_ll_bus.h"
 #include "stm32f1xx_ll_rcc.h"
 #include "stm32f1xx_ll_usart.h"
 #include "stm32f1xx_ll_gpio.h"
+
+#include <optional>
+#include <etl/singleton.h>
+#include <etl/memory_model.h>
+#include <etl/queue_spsc_atomic.h>
+#include <etl/private/delegate_cpp11.h>
 
 namespace System
 {
@@ -29,14 +27,16 @@ namespace System
     public:
         Serial(USART_TypeDef* instance, size_t baud_rate = 9600u) noexcept
             : m_usart{ instance },
-            m_isr{ interrupt_t::delegate_t::create<Serial, &Serial::interrupt_handler>(*this) },
+            m_tx{Peripheral::GPIO::Alternate::PushPull},
+            m_rx{Peripheral::GPIO::Input::PullResistor, Peripheral::GPIO::InputResistor::PullUp},
+            m_isr{ delegate_t::template create<Serial, &Serial::interrupt_handler>(*this) },
             m_rxBuffer{}
         {
             if (m_usart == USART1)
                 configure(baud_rate);
         }
 
-        void WriteC(char input) const noexcept
+        void Write(char input) const noexcept
         {
             transmit_byte(input);
         }
@@ -60,26 +60,33 @@ namespace System
     private:
         using buffer_t = etl::queue_spsc_atomic<char, 64u, etl::memory_model::MEMORY_MODEL_SMALL>;
         using interrupt_t = System::Interrupt<Serial, InterruptSource::eUSART1, 5u>;
+        using delegate_t = interrupt_t::delegate_t;
+
+        using TX_Pin = Peripheral::GPIO::Module<Peripheral::GPIO::Port::A, 9>;
+        using RX_Pin = Peripheral::GPIO::Module<Peripheral::GPIO::Port::A, 10>;
 
     private:
         USART_TypeDef* const m_usart;
+        TX_Pin m_tx;
+        RX_Pin m_rx;
         const interrupt_t m_isr;
+
+
         buffer_t m_rxBuffer;
 
     private:
         void configure(size_t baud_rate) const noexcept
         {
             /* Peripheral clock enable */
-            LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_GPIOA | LL_APB2_GRP1_PERIPH_USART1);
+            LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
 
             /* USART1 GPIO Configuration */
-            LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);
-            LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_HIGH);
-            LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_PUSHPULL);
-            LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_10, LL_GPIO_PULL_UP);
+            //LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);
+            //LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_HIGH);
+            //LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_PUSHPULL);
 
-            LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_10, LL_GPIO_MODE_FLOATING);
-            LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_10, LL_GPIO_SPEED_FREQ_HIGH);
+            //LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_10, LL_GPIO_MODE_FLOATING);
+            //LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_10, LL_GPIO_PULL_UP);
 
             /* UART Configuration */
             LL_USART_SetTransferDirection(USART1, LL_USART_DIRECTION_TX_RX);
@@ -91,15 +98,15 @@ namespace System
 
             LL_USART_Enable(USART1);
         }
+        void interrupt_handler() noexcept
+        {
+            if (LL_USART_IsActiveFlag_RXNE(m_usart))
+                m_rxBuffer.push(LL_USART_ReceiveData8(m_usart));
+        }
         inline void transmit_byte(const uint8_t data) const noexcept
         {
             while (!LL_USART_IsActiveFlag_TXE(m_usart));
             LL_USART_TransmitData8(m_usart, data);
-        }
-        inline void interrupt_handler() noexcept
-        {
-            if (LL_USART_IsActiveFlag_RXNE(m_usart))
-                m_rxBuffer.push(LL_USART_ReceiveData8(m_usart));
         }
     };
 }

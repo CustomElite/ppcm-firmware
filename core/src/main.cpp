@@ -1,23 +1,19 @@
 #include "main.h"
-#include "mcu.h"
-#include "serial.hpp"
 #include "gpio.hpp"
-#include "sys_tick.hpp"
+#include "mcu.h"
+
 
 #include "printf.h"
+
 #include <etl/singleton.h>
-#include <stdint.h>
+#include <etl/binary.h>
 
-using namespace Peripheral;
-
-using serial_t = etl::singleton<System::Serial>;
-using STATUS_LED = GPIO::GPIO_Module<GPIO::Port::C, 13>;
-
-static uint16_t s_Watch = 0;
+uint16_t watch{0};
+uint32_t timer{0};
 
 int main()
 {
-    __NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_4);
+    __NVIC_SetPriorityGrouping((std::uint32_t)3u);
 
     MCU::Clock_Init();
     MCU::GPIO_Init();
@@ -26,28 +22,26 @@ int main()
     auto& serial = serial_t::instance();
 
     SysTickModule sysTick(1000u);
-    STATUS_LED led{GPIO::Mode::Output};
-
-    uint64_t timer{0};
+    STATUS_LED led{GPIO::OpenDrain::_10MHz, GPIO::State::High};
 
     while (1) 
     {
         if ((sysTick.Tick() - timer) >= 2000u)
         {
-            led = GPIO::OutputState::Low;
+            led = GPIO::State::Low;
             sysTick.Wait(250u);
-            led = GPIO::OutputState::High;
+            led = GPIO::State::High;
             sysTick.Wait(250u);
-            led = GPIO::OutputState::Low;
+            led = GPIO::State::Low;
             sysTick.Wait(250u);
-            led = GPIO::OutputState::High;
+            led = GPIO::State::High;
             sysTick.Wait(250u);
-            ++s_Watch;
+            ++watch;
             timer = sysTick.Tick();
         }
         while (serial.Size())
         {
-            serial.WriteC(serial.Read().value_or(0));
+            serial.Write(serial.Read().value_or(0));
         }
     }
     
@@ -57,5 +51,5 @@ int main()
 void putchar_(char c)
 {
     auto& serial = serial_t::instance();
-    serial.WriteC(c);
+    serial.Write(c);
 }

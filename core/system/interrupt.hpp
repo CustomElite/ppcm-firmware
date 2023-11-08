@@ -7,6 +7,7 @@
 
 #include "macros.h"
 #include "stm32f103xb.h"
+#include "tools.hpp"
 
 namespace System 
 {
@@ -69,43 +70,10 @@ namespace System
         eUSBWakeUp = USBWakeUp_IRQn      
     };
 
-    #if 0
-    template <typename Key>
-    class InterruptDelegateService
-    {
-    public:
-        typedef void(*delegate_t)();
-
-        InterruptDelegateService() noexcept = default;
-
-        ALWAYS_INLINE static void Call_ISR() noexcept
-        {
-            if (m_ISR) m_ISR();
-        }
-
-    protected:
-        ALWAYS_INLINE static void RegisterISR(delegate_t isr_delegate) noexcept
-        {
-            if (!m_ISR)
-                m_ISR = isr_delegate;
-        }
-        ALWAYS_INLINE static void UnregisterISR() noexcept
-        {
-            m_ISR = nullptr;
-        }
-        ALWAYS_INLINE static bool IsValid() noexcept
-        {
-            return (m_ISR != nullptr);
-        }
-    private:
-        inline static delegate_t m_ISR{ nullptr };
-    };
-#endif
-
     template <InterruptSource Source>
     constexpr bool IsEnablable() noexcept
     {
-        return (static_cast<std::underlying_type_t<InterruptSource>>(Source) >= 0);
+        return (Common::Tools::EnumValue(Source) >= 0);
     }
 
     template <typename Key>
@@ -120,7 +88,7 @@ namespace System
         }
 
     protected:
-        ALWAYS_INLINE static bool Register(delegate_t isr_delegate) noexcept
+        ALWAYS_INLINE static bool Register(const delegate_t& isr_delegate) noexcept
         {
             if (m_delegate.is_valid()) return false;
 
@@ -149,7 +117,7 @@ namespace System
         using base_t = InterruptDelegator<Source>;
         using delegate_t = typename base_t::delegate_t;
 
-        ALWAYS_INLINE Interrupt(delegate_t isr_delegate) noexcept
+        ALWAYS_INLINE Interrupt(delegate_t&& isr_delegate) noexcept
         {
             if (base_t::Register(isr_delegate))
             {

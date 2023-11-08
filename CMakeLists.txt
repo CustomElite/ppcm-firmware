@@ -24,7 +24,7 @@ add_subdirectory(libs/etl)
 
 set(PROJECT_INCLUDE_DIR
     core/include
-    core/general
+    core/common
     core/peripherals
     core/system)
 

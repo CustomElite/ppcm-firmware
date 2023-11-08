@@ -3,313 +3,378 @@
 #include "register.hpp"
 #include "tools.hpp"
 
-#include "stm32f1xx.h"
+#include "mcu_config.hpp"
 
-#include <stddef.h>
-#include <stdint.h>
-#include <type_traits>
-
-namespace RegisterMap
+namespace Peripherals::IO
 {
-    constexpr uint32_t GetPortBase(uint8_t port) noexcept
+    using namespace Common;
+
+    namespace Settings
     {
-        switch (port)
+        enum class InputMode : uint8_t
         {
-            case 0: return GPIOA_BASE;
-            case 1: return GPIOB_BASE;
-            case 2: return GPIOC_BASE;
-            case 3: return GPIOD_BASE;
-            case 4: return GPIOE_BASE;
-            default: return 0;
+            Analog = 0b00,
+            Floating = 0b01,
+            PuPd = 0b10
+        };
+        enum class OutputMode : uint8_t
+        {
+            PushPull = 0b00,
+            OpenDrain = 0b01
+        };
+        enum class OutputSpeed : uint8_t
+        {
+            _10MHz = 0b01,
+            _2MHz = 0b10,
+            _50MHz = 0b11
+        };
+        enum class Alternate : uint8_t
+        {
+            PushPull = 0b10,
+            OpenDrain = 0b11
+        };
+        enum class PullResistor : uint8_t
+        {
+            PullDown = 0,
+            PullUp
         };
     }
 
-    template <uint8_t Port, uint8_t Pin, uint32_t BaseAddress = GetPortBase(Port) + offsetof(GPIO_TypeDef, CRL)>
-    struct CRL : public General::u32_reg_t<BaseAddress>
+    enum class Port : uint8_t
     {
-        using reg_t = General::u32_reg_t<BaseAddress>;
-        using reg_t::reg_t;
-
-    protected:
-        auto MODE0() noexcept { return reg_t::template Bits<GPIO_CRL_MODE0_Msk>(); }
-        auto CNF0() noexcept { return reg_t::template Bits<GPIO_CRL_CNF0_Msk>(); }
-        auto MODE1() noexcept { return reg_t::template Bits<GPIO_CRL_MODE1_Msk>(); }
-        auto CNF1() noexcept { return reg_t::template Bits<GPIO_CRL_CNF1_Msk>(); }
-        auto MODE2() noexcept { return reg_t::template Bits<GPIO_CRL_MODE2_Msk>(); }
-        auto CNF2() noexcept { return reg_t::template Bits<GPIO_CRL_CNF2_Msk>(); }
-        auto MODE3() noexcept { return reg_t::template Bits<GPIO_CRL_MODE3_Msk>(); }
-        auto CNF3() noexcept { return reg_t::template Bits<GPIO_CRL_CNF3_Msk>(); }
-        auto MODE4() noexcept { return reg_t::template Bits<GPIO_CRL_MODE4_Msk>(); }
-        auto CNF4() noexcept { return reg_t::template Bits<GPIO_CRL_CNF4_Msk>(); }
-        auto MODE5() noexcept { return reg_t::template Bits<GPIO_CRL_MODE5_Msk>(); }
-        auto CNF5() noexcept { return reg_t::template Bits<GPIO_CRL_CNF5_Msk>(); }
-        auto MODE6() noexcept { return reg_t::template Bits<GPIO_CRL_MODE6_Msk>(); }
-        auto CNF6() noexcept { return reg_t::template Bits<GPIO_CRL_CNF6_Msk>(); }
-        auto MODE7() noexcept { return reg_t::template Bits<GPIO_CRL_MODE7_Msk>(); }
-        auto CNF7() noexcept { return reg_t::template Bits<GPIO_CRL_CNF7_Msk>(); }
+        A = 0u,
+        B,
+        C,
+        D,
+        E
     };
 
-    template <uint8_t Port, uint8_t Pin, uint32_t BaseAddress = GetPortBase(Port) + offsetof(GPIO_TypeDef, CRH)>
-    struct CRH : public General::u32_reg_t<BaseAddress>
+    constexpr static uint32_t GetBase(Port port) noexcept
     {
-        using reg_t = General::u32_reg_t<BaseAddress>;
-        using reg_t::reg_t;
+        switch (port)
+        {
+            case Port::A: return GPIOA_BASE;
+            case Port::B: return GPIOB_BASE;
+            case Port::C: return GPIOC_BASE;
+            case Port::D: return GPIOD_BASE;
+            case Port::E: return GPIOE_BASE;
+        };
+    }
 
-    protected:
-        auto MODE8() noexcept { return reg_t::template Bits<GPIO_CRH_MODE8_Msk>(); }
-        auto CNF8() noexcept { return reg_t::template Bits<GPIO_CRH_CNF8_Msk>(); }
-        auto MODE9() noexcept { return reg_t::template Bits<GPIO_CRH_MODE9_Msk>(); }
-        auto CNF9() noexcept { return reg_t::template Bits<GPIO_CRH_CNF9_Msk>(); }
-        auto MODE10() noexcept { return reg_t::template Bits<GPIO_CRH_MODE10_Msk>(); }
-        auto CNF10() noexcept { return reg_t::template Bits<GPIO_CRH_CNF10_Msk>(); }
-        auto MODE11() noexcept { return reg_t::template Bits<GPIO_CRH_MODE11_Msk>(); }
-        auto CNF11() noexcept { return reg_t::template Bits<GPIO_CRH_CNF11_Msk>(); }
-        auto MODE12() noexcept { return reg_t::template Bits<GPIO_CRH_MODE12_Msk>(); }
-        auto CNF12() noexcept { return reg_t::template Bits<GPIO_CRH_CNF12_Msk>(); }
-        auto MODE13() noexcept { return reg_t::template Bits<GPIO_CRH_MODE13_Msk>(); }
-        auto CNF13() noexcept { return reg_t::template Bits<GPIO_CRH_CNF13_Msk>(); }
-        auto MODE14() noexcept { return reg_t::template Bits<GPIO_CRH_MODE14_Msk>(); }
-        auto CNF14() noexcept { return reg_t::template Bits<GPIO_CRH_CNF14_Msk>(); }
-        auto MODE15() noexcept { return reg_t::template Bits<GPIO_CRH_MODE15_Msk>(); }
-        auto CNF15() noexcept { return reg_t::template Bits<GPIO_CRH_CNF15_Msk>(); }
-    };
-
-    template <uint8_t Port, uint8_t Pin>
-    struct CRx : private CRL<Port, Pin>, private CRH<Port, Pin>
+    namespace RegisterMap
     {
-        using CRL_t = CRL<Port, Pin>;
-        using CRH_t = CRH<Port, Pin>;
+        using namespace Settings;
 
-        auto MODE() noexcept
+        template <Port PORT, uint8_t PIN, uint32_t ADDR = GetBase(PORT) + offsetof(GPIO_TypeDef, CRL)>
+        struct CRL : public u32_reg_t<ADDR>
         {
-            // CRL
-            if constexpr (Pin == 0) return CRL_t::MODE0();
-            if constexpr (Pin == 1) return CRL_t::MODE1();
-            if constexpr (Pin == 2) return CRL_t::MODE2();
-            if constexpr (Pin == 3) return CRL_t::MODE3();
-            if constexpr (Pin == 4) return CRL_t::MODE4();
-            if constexpr (Pin == 5) return CRL_t::MODE5();
-            if constexpr (Pin == 6) return CRL_t::MODE6();
-            if constexpr (Pin == 7) return CRL_t::MODE7();
-            // CRH
-            if constexpr (Pin == 8) return CRH_t::MODE8();
-            if constexpr (Pin == 9) return CRH_t::MODE9();
-            if constexpr (Pin == 10) return CRH_t::MODE10();
-            if constexpr (Pin == 11) return CRH_t::MODE11();
-            if constexpr (Pin == 12) return CRH_t::MODE12();
-            if constexpr (Pin == 13) return CRH_t::MODE13();
-            if constexpr (Pin == 14) return CRH_t::MODE14();
-            if constexpr (Pin == 15) return CRH_t::MODE15();
-        }
-        auto CNF() noexcept
+            using reg_t = u32_reg_t<ADDR>;
+            using reg_t::reg_t;
+
+        protected:
+            auto MODE7() { return reg_t::template Bits<GPIO_CRL_MODE7>(); }
+            auto CNF7() { return reg_t::template Bits<GPIO_CRL_CNF7>(); }
+            auto MODE6() { return reg_t::template Bits<GPIO_CRL_MODE6>(); }
+            auto CNF6() { return reg_t::template Bits<GPIO_CRL_CNF6>(); }
+            auto MODE5() { return reg_t::template Bits<GPIO_CRL_MODE5>(); }
+            auto CNF5() { return reg_t::template Bits<GPIO_CRL_CNF5>(); }
+            auto MODE4() { return reg_t::template Bits<GPIO_CRL_MODE4>(); }
+            auto CNF4() { return reg_t::template Bits<GPIO_CRL_CNF4>(); }
+            auto MODE3() { return reg_t::template Bits<GPIO_CRL_MODE3>(); }
+            auto CNF3() { return reg_t::template Bits<GPIO_CRL_CNF3>(); }
+            auto MODE2() { return reg_t::template Bits<GPIO_CRL_MODE2>(); }
+            auto CNF2() { return reg_t::template Bits<GPIO_CRL_CNF2>(); }
+            auto MODE1() { return reg_t::template Bits<GPIO_CRL_MODE1>(); }
+            auto CNF1() { return reg_t::template Bits<GPIO_CRL_CNF1>(); }
+            auto MODE0() { return reg_t::template Bits<GPIO_CRL_MODE0>(); }
+            auto CNF0() { return reg_t::template Bits<GPIO_CRL_CNF0>(); }
+        };
+
+        template <Port PORT, uint8_t PIN, uint32_t ADDR = GetBase(PORT) + offsetof(GPIO_TypeDef, CRH)>
+        struct CRH : public u32_reg_t<ADDR>
         {
-            // CRL
-            if constexpr (Pin == 0) return CRL_t::CNF0();
-            if constexpr (Pin == 1) return CRL_t::CNF1();
-            if constexpr (Pin == 2) return CRL_t::CNF2();
-            if constexpr (Pin == 3) return CRL_t::CNF3();
-            if constexpr (Pin == 4) return CRL_t::CNF4();
-            if constexpr (Pin == 5) return CRL_t::CNF5();
-            if constexpr (Pin == 6) return CRL_t::CNF6();
-            if constexpr (Pin == 7) return CRL_t::CNF7();
-            // CRH
-            if constexpr (Pin == 8) return CRH_t::CNF8();
-            if constexpr (Pin == 9) return CRH_t::CNF9();
-            if constexpr (Pin == 10) return CRH_t::CNF10();
-            if constexpr (Pin == 11) return CRH_t::CNF10();
-            if constexpr (Pin == 12) return CRH_t::CNF12();
-            if constexpr (Pin == 13) return CRH_t::CNF13();
-            if constexpr (Pin == 14) return CRH_t::CNF14();
-            if constexpr (Pin == 15) return CRH_t::CNF15();
-        }
-    };
+            using reg_t = u32_reg_t<ADDR>;
+            using reg_t::reg_t;
 
-    template <uint8_t Port, uint8_t Pin, uint32_t BaseAddress>
-    struct IDR : public General::u32_reg_t<BaseAddress>
-    {
-        using reg_t = General::u32_reg_t<BaseAddress>;
-        using reg_t::reg_t;
+        protected:
+            auto MODE15() { return reg_t::template Bits<GPIO_CRH_MODE15>(); }
+            auto CNF15() { return reg_t::template Bits<GPIO_CRH_CNF15>(); }
+            auto MODE14() { return reg_t::template Bits<GPIO_CRH_MODE14>(); }
+            auto CNF14() { return reg_t::template Bits<GPIO_CRH_CNF14>(); }
+            auto MODE13() { return reg_t::template Bits<GPIO_CRH_MODE13>(); }
+            auto CNF13() { return reg_t::template Bits<GPIO_CRH_CNF13>(); }
+            auto MODE12() { return reg_t::template Bits<GPIO_CRH_MODE12>(); }
+            auto CNF12() { return reg_t::template Bits<GPIO_CRH_CNF12>(); }
+            auto MODE11() { return reg_t::template Bits<GPIO_CRH_MODE11>(); }
+            auto CNF11() { return reg_t::template Bits<GPIO_CRH_CNF11>(); }
+            auto MODE10() { return reg_t::template Bits<GPIO_CRH_MODE10>(); }
+            auto CNF10() { return reg_t::template Bits<GPIO_CRH_CNF10>(); }
+            auto MODE9() { return reg_t::template Bits<GPIO_CRH_MODE9>(); }
+            auto CNF9() { return reg_t::template Bits<GPIO_CRH_CNF9>(); }
+            auto MODE8() { return reg_t::template Bits<GPIO_CRH_MODE8>(); }
+            auto CNF8() { return reg_t::template Bits<GPIO_CRH_CNF8>(); }      
+        };
 
-        auto ID() noexcept
+        template <Port PORT, uint8_t PIN>
+        struct CRx : private CRL<PORT, PIN>, private CRH<PORT, PIN>
         {
-            if constexpr (Pin == 0) return reg_t::template Bits<GPIO_IDR_IDR0_Msk>();
-            if constexpr (Pin == 1) return reg_t::template Bits<GPIO_IDR_IDR1_Msk>();
-            if constexpr (Pin == 2) return reg_t::template Bits<GPIO_IDR_IDR2_Msk>();
-            if constexpr (Pin == 3) return reg_t::template Bits<GPIO_IDR_IDR3_Msk>();
-            if constexpr (Pin == 4) return reg_t::template Bits<GPIO_IDR_IDR4_Msk>();
-            if constexpr (Pin == 5) return reg_t::template Bits<GPIO_IDR_IDR5_Msk>();
-            if constexpr (Pin == 6) return reg_t::template Bits<GPIO_IDR_IDR6_Msk>();
-            if constexpr (Pin == 7) return reg_t::template Bits<GPIO_IDR_IDR7_Msk>();
-            if constexpr (Pin == 8) return reg_t::template Bits<GPIO_IDR_IDR8_Msk>();
-            if constexpr (Pin == 9) return reg_t::template Bits<GPIO_IDR_IDR9_Msk>();
-            if constexpr (Pin == 10) return reg_t::template Bits<GPIO_IDR_IDR10_Msk>();
-            if constexpr (Pin == 11) return reg_t::template Bits<GPIO_IDR_IDR11_Msk>();
-            if constexpr (Pin == 12) return reg_t::template Bits<GPIO_IDR_IDR12_Msk>();
-            if constexpr (Pin == 13) return reg_t::template Bits<GPIO_IDR_IDR13_Msk>();
-            if constexpr (Pin == 14) return reg_t::template Bits<GPIO_IDR_IDR14_Msk>();
-            if constexpr (Pin == 15) return reg_t::template Bits<GPIO_IDR_IDR15_Msk>();
-        }
-    };
+            using CRL_t = CRL<PORT, PIN>;
+            using CRH_t = CRH<PORT, PIN>;
 
-    template <uint8_t Port, uint8_t Pin, uint32_t BaseAddress>
-    struct ODR : public General::u32_reg_t<BaseAddress>
-    {
-        using reg_t = General::u32_reg_t<BaseAddress>;
-        using reg_t::reg_t;
+            auto MODE()
+            {
+                // CRL
+                if constexpr (PIN == 7) return CRL_t::MODE7();
+                if constexpr (PIN == 6) return CRL_t::MODE6();
+                if constexpr (PIN == 5) return CRL_t::MODE5();
+                if constexpr (PIN == 4) return CRL_t::MODE4();
+                if constexpr (PIN == 3) return CRL_t::MODE3();
+                if constexpr (PIN == 2) return CRL_t::MODE2();
+                if constexpr (PIN == 1) return CRL_t::MODE1();
+                if constexpr (PIN == 0) return CRL_t::MODE0();
 
-        auto OD() noexcept
+                // CRH
+                if constexpr (PIN == 15) return CRH_t::MODE15();
+                if constexpr (PIN == 14) return CRH_t::MODE14();
+                if constexpr (PIN == 13) return CRH_t::MODE13();
+                if constexpr (PIN == 12) return CRH_t::MODE12();
+                if constexpr (PIN == 11) return CRH_t::MODE11();
+                if constexpr (PIN == 10) return CRH_t::MODE10();
+                if constexpr (PIN == 9) return CRH_t::MODE9();
+                if constexpr (PIN == 8) return CRH_t::MODE8();
+            }
+            auto CNF()
+            {
+                // CRL
+                if constexpr (PIN == 7) return CRL_t::CNF7();
+                if constexpr (PIN == 6) return CRL_t::CNF6();
+                if constexpr (PIN == 5) return CRL_t::CNF5();
+                if constexpr (PIN == 4) return CRL_t::CNF4();
+                if constexpr (PIN == 3) return CRL_t::CNF3();
+                if constexpr (PIN == 2) return CRL_t::CNF2();
+                if constexpr (PIN == 1) return CRL_t::CNF1();
+                if constexpr (PIN == 0) return CRL_t::CNF0();
+                // CRH
+                if constexpr (PIN == 15) return CRH_t::CNF15();
+                if constexpr (PIN == 14) return CRH_t::CNF14();
+                if constexpr (PIN == 13) return CRH_t::CNF13();
+                if constexpr (PIN == 12) return CRH_t::CNF12();
+                if constexpr (PIN == 11) return CRH_t::CNF11();
+                if constexpr (PIN == 10) return CRH_t::CNF10();
+                if constexpr (PIN == 9) return CRH_t::CNF9();
+                if constexpr (PIN == 8) return CRH_t::CNF8();
+            }
+
+            void ConfigureInput(InputMode input) noexcept
+            {
+                MODE() = false;
+                CNF() = Tools::EnumValue(input);
+            }
+            void ConfigureOutput(OutputMode output) noexcept
+            {
+                MODE() = Tools::EnumValue(OutputSpeed::_10MHz);
+                CNF() = Tools::EnumValue(output);
+            }
+            void ConfigureAlternate(Alternate alternate) noexcept
+            {
+                MODE() = Tools::EnumValue(OutputSpeed::_10MHz);
+                CNF() = Tools::EnumValue(alternate);
+            }
+        };
+
+        template <Port PORT, uint8_t PIN, uint32_t ADDR>
+        struct IDR : public u32_reg_t<ADDR>
         {
-            if constexpr (Pin == 0) return reg_t::template Bits<GPIO_ODR_ODR0_Msk>();
-            if constexpr (Pin == 1) return reg_t::template Bits<GPIO_ODR_ODR1_Msk>();
-            if constexpr (Pin == 2) return reg_t::template Bits<GPIO_ODR_ODR2_Msk>();
-            if constexpr (Pin == 3) return reg_t::template Bits<GPIO_ODR_ODR3_Msk>();
-            if constexpr (Pin == 4) return reg_t::template Bits<GPIO_ODR_ODR4_Msk>();
-            if constexpr (Pin == 5) return reg_t::template Bits<GPIO_ODR_ODR5_Msk>();
-            if constexpr (Pin == 6) return reg_t::template Bits<GPIO_ODR_ODR6_Msk>();
-            if constexpr (Pin == 7) return reg_t::template Bits<GPIO_ODR_ODR7_Msk>();
-            if constexpr (Pin == 8) return reg_t::template Bits<GPIO_ODR_ODR8_Msk>();
-            if constexpr (Pin == 9) return reg_t::template Bits<GPIO_ODR_ODR9_Msk>();
-            if constexpr (Pin == 10) return reg_t::template Bits<GPIO_ODR_ODR10_Msk>();
-            if constexpr (Pin == 11) return reg_t::template Bits<GPIO_ODR_ODR11_Msk>();
-            if constexpr (Pin == 12) return reg_t::template Bits<GPIO_ODR_ODR12_Msk>();
-            if constexpr (Pin == 13) return reg_t::template Bits<GPIO_ODR_ODR13_Msk>();
-            if constexpr (Pin == 14) return reg_t::template Bits<GPIO_ODR_ODR14_Msk>();
-            if constexpr (Pin == 15) return reg_t::template Bits<GPIO_ODR_ODR15_Msk>();
-        }
-    };
+            using reg_t = u32_reg_t<ADDR>;
+            using reg_t::reg_t;
 
-    template <uint8_t Port, uint8_t Pin, uint32_t BaseAddress>
-    struct BSRR : public General::u32_reg_t<BaseAddress>
-    {
-        using reg_t = General::u32_reg_t<BaseAddress>;
-        using reg_t::reg_t;
+            auto ID()
+            {
+                if constexpr (PIN == 15) return reg_t::template Bits<GPIO_IDR_IDR15>();
+                if constexpr (PIN == 14) return reg_t::template Bits<GPIO_IDR_IDR14>();
+                if constexpr (PIN == 13) return reg_t::template Bits<GPIO_IDR_IDR13>();
+                if constexpr (PIN == 12) return reg_t::template Bits<GPIO_IDR_IDR12>();
+                if constexpr (PIN == 11) return reg_t::template Bits<GPIO_IDR_IDR11>();
+                if constexpr (PIN == 10) return reg_t::template Bits<GPIO_IDR_IDR10>();
+                if constexpr (PIN == 9) return reg_t::template Bits<GPIO_IDR_IDR9>();
+                if constexpr (PIN == 8) return reg_t::template Bits<GPIO_IDR_IDR8>();
+                if constexpr (PIN == 7) return reg_t::template Bits<GPIO_IDR_IDR7>();
+                if constexpr (PIN == 6) return reg_t::template Bits<GPIO_IDR_IDR6>();
+                if constexpr (PIN == 5) return reg_t::template Bits<GPIO_IDR_IDR5>();
+                if constexpr (PIN == 4) return reg_t::template Bits<GPIO_IDR_IDR4>();
+                if constexpr (PIN == 3) return reg_t::template Bits<GPIO_IDR_IDR3>();
+                if constexpr (PIN == 2) return reg_t::template Bits<GPIO_IDR_IDR2>();
+                if constexpr (PIN == 1) return reg_t::template Bits<GPIO_IDR_IDR1>();
+                if constexpr (PIN == 0) return reg_t::template Bits<GPIO_IDR_IDR0>();
+            }
+        };
 
-        void BS() noexcept
+        template <Port PORT, uint8_t PIN, uint32_t ADDR>
+        struct ODR : public u32_reg_t<ADDR>
         {
-            if constexpr (Pin == 0) reg_t::template Bits<GPIO_BSRR_BS0_Msk>() = true;
-            if constexpr (Pin == 1) reg_t::template Bits<GPIO_BSRR_BS1_Msk>() = true;
-            if constexpr (Pin == 2) reg_t::template Bits<GPIO_BSRR_BS2_Msk>() = true;
-            if constexpr (Pin == 3) reg_t::template Bits<GPIO_BSRR_BS3_Msk>() = true;
-            if constexpr (Pin == 4) reg_t::template Bits<GPIO_BSRR_BS4_Msk>() = true;
-            if constexpr (Pin == 5) reg_t::template Bits<GPIO_BSRR_BS5_Msk>() = true;
-            if constexpr (Pin == 6) reg_t::template Bits<GPIO_BSRR_BS6_Msk>() = true;
-            if constexpr (Pin == 7) reg_t::template Bits<GPIO_BSRR_BS7_Msk>() = true;
-            if constexpr (Pin == 8) reg_t::template Bits<GPIO_BSRR_BS8_Msk>() = true;
-            if constexpr (Pin == 9) reg_t::template Bits<GPIO_BSRR_BS9_Msk>() = true;
-            if constexpr (Pin == 10) reg_t::template Bits<GPIO_BSRR_BS10_Msk>() = true;
-            if constexpr (Pin == 11) reg_t::template Bits<GPIO_BSRR_BS11_Msk>() = true;
-            if constexpr (Pin == 12) reg_t::template Bits<GPIO_BSRR_BS12_Msk>() = true;
-            if constexpr (Pin == 13) reg_t::template Bits<GPIO_BSRR_BS13_Msk>() = true;
-            if constexpr (Pin == 14) reg_t::template Bits<GPIO_BSRR_BS14_Msk>() = true;
-            if constexpr (Pin == 15) reg_t::template Bits<GPIO_BSRR_BS15_Msk>() = true;
-        }
-        void BR() noexcept
-        {
-            if constexpr (Pin == 0) reg_t::template Bits<GPIO_BSRR_BR0_Msk>() = true;
-            if constexpr (Pin == 1) reg_t::template Bits<GPIO_BSRR_BR1_Msk>() = true;
-            if constexpr (Pin == 2) reg_t::template Bits<GPIO_BSRR_BR2_Msk>() = true;
-            if constexpr (Pin == 3) reg_t::template Bits<GPIO_BSRR_BR3_Msk>() = true;
-            if constexpr (Pin == 4) reg_t::template Bits<GPIO_BSRR_BR4_Msk>() = true;
-            if constexpr (Pin == 5) reg_t::template Bits<GPIO_BSRR_BR5_Msk>() = true;
-            if constexpr (Pin == 6) reg_t::template Bits<GPIO_BSRR_BR6_Msk>() = true;
-            if constexpr (Pin == 7) reg_t::template Bits<GPIO_BSRR_BR7_Msk>() = true;
-            if constexpr (Pin == 8) reg_t::template Bits<GPIO_BSRR_BR8_Msk>() = true;
-            if constexpr (Pin == 9) reg_t::template Bits<GPIO_BSRR_BR9_Msk>() = true;
-            if constexpr (Pin == 10) reg_t::template Bits<GPIO_BSRR_BR10_Msk>() = true;
-            if constexpr (Pin == 11) reg_t::template Bits<GPIO_BSRR_BR11_Msk>() = true;
-            if constexpr (Pin == 12) reg_t::template Bits<GPIO_BSRR_BR12_Msk>() = true;
-            if constexpr (Pin == 13) reg_t::template Bits<GPIO_BSRR_BR13_Msk>() = true;
-            if constexpr (Pin == 14) reg_t::template Bits<GPIO_BSRR_BR14_Msk>() = true;
-            if constexpr (Pin == 15) reg_t::template Bits<GPIO_BSRR_BR15_Msk>() = true;
-        }
-        BSRR& operator = (bool input) noexcept
-        {
-            (input) ? BS() : BR();
-            return *this;
-        }
-    };
+            using reg_t = u32_reg_t<ADDR>;
+            using reg_t::reg_t;
 
-    template <uint8_t Port, uint8_t Pin, uint32_t BaseAddress>
-    struct BRR : public General::u32_reg_t<BaseAddress>
-    {
-        using reg_t = General::u32_reg_t<BaseAddress>;
-        using reg_t::reg_t;
+            auto OD()
+            {
+                if constexpr (PIN == 15) return reg_t::template Bits<GPIO_ODR_ODR15>();
+                if constexpr (PIN == 14) return reg_t::template Bits<GPIO_ODR_ODR14>();
+                if constexpr (PIN == 13) return reg_t::template Bits<GPIO_ODR_ODR13>();
+                if constexpr (PIN == 12) return reg_t::template Bits<GPIO_ODR_ODR12>();
+                if constexpr (PIN == 11) return reg_t::template Bits<GPIO_ODR_ODR11>();
+                if constexpr (PIN == 10) return reg_t::template Bits<GPIO_ODR_ODR10>();
+                if constexpr (PIN == 9) return reg_t::template Bits<GPIO_ODR_ODR9>();
+                if constexpr (PIN == 8) return reg_t::template Bits<GPIO_ODR_ODR8>();
+                if constexpr (PIN == 7) return reg_t::template Bits<GPIO_ODR_ODR7>();
+                if constexpr (PIN == 6) return reg_t::template Bits<GPIO_ODR_ODR6>();
+                if constexpr (PIN == 5) return reg_t::template Bits<GPIO_ODR_ODR5>();
+                if constexpr (PIN == 4) return reg_t::template Bits<GPIO_ODR_ODR4>();
+                if constexpr (PIN == 3) return reg_t::template Bits<GPIO_ODR_ODR3>();
+                if constexpr (PIN == 2) return reg_t::template Bits<GPIO_ODR_ODR2>();
+                if constexpr (PIN == 1) return reg_t::template Bits<GPIO_ODR_ODR1>();
+                if constexpr (PIN == 0) return reg_t::template Bits<GPIO_ODR_ODR0>();
+            }
 
-        void BR() noexcept
+            void SetPullResistor(PullResistor input) noexcept
+            {
+                OD() = Tools::EnumValue(input);
+            }
+        };
+
+        template <Port PORT, uint8_t PIN, uint32_t ADDR>
+        struct BSRR : public u32_reg_t<ADDR>
         {
-            if constexpr (Pin == 0) reg_t::template Bits<GPIO_BRR_BR0_Msk>() = true;
-            if constexpr (Pin == 1) reg_t::template Bits<GPIO_BRR_BR1_Msk>() = true;
-            if constexpr (Pin == 2) reg_t::template Bits<GPIO_BRR_BR2_Msk>() = true;
-            if constexpr (Pin == 3) reg_t::template Bits<GPIO_BRR_BR3_Msk>() = true;
-            if constexpr (Pin == 4) reg_t::template Bits<GPIO_BRR_BR4_Msk>() = true;
-            if constexpr (Pin == 5) reg_t::template Bits<GPIO_BRR_BR5_Msk>() = true;
-            if constexpr (Pin == 6) reg_t::template Bits<GPIO_BRR_BR6_Msk>() = true;
-            if constexpr (Pin == 7) reg_t::template Bits<GPIO_BRR_BR7_Msk>() = true;
-            if constexpr (Pin == 8) reg_t::template Bits<GPIO_BRR_BR8_Msk>() = true;
-            if constexpr (Pin == 9) reg_t::template Bits<GPIO_BRR_BR9_Msk>() = true;
-            if constexpr (Pin == 10) reg_t::template Bits<GPIO_BRR_BR10_Msk>() = true;
-            if constexpr (Pin == 11) reg_t::template Bits<GPIO_BRR_BR11_Msk>() = true;
-            if constexpr (Pin == 12) reg_t::template Bits<GPIO_BRR_BR12_Msk>() = true;
-            if constexpr (Pin == 13) reg_t::template Bits<GPIO_BRR_BR13_Msk>() = true;
-            if constexpr (Pin == 14) reg_t::template Bits<GPIO_BRR_BR14_Msk>() = true;
-            if constexpr (Pin == 15) reg_t::template Bits<GPIO_BRR_BR15_Msk>() = true;
-        }
-    };
+            using reg_t = u32_reg_t<ADDR>;
+            using reg_t::reg_t;
 
-    template <uint8_t Port, uint8_t Pin, uint32_t BaseAddress>
-    struct LCKR : public General::u32_reg_t<BaseAddress>
-    {
-        using reg_t = General::u32_reg_t<BaseAddress>;
-        using reg_t::reg_t;
+            void Set() noexcept
+            {
+                if constexpr (PIN == 15) reg_t::template Bits<GPIO_BSRR_BS15>() = true;
+                if constexpr (PIN == 14) reg_t::template Bits<GPIO_BSRR_BS14>() = true;
+                if constexpr (PIN == 13) reg_t::template Bits<GPIO_BSRR_BS13>() = true;
+                if constexpr (PIN == 12) reg_t::template Bits<GPIO_BSRR_BS12>() = true;
+                if constexpr (PIN == 11) reg_t::template Bits<GPIO_BSRR_BS11>() = true;
+                if constexpr (PIN == 10) reg_t::template Bits<GPIO_BSRR_BS10>() = true;
+                if constexpr (PIN == 9) reg_t::template Bits<GPIO_BSRR_BS9>() = true;
+                if constexpr (PIN == 8) reg_t::template Bits<GPIO_BSRR_BS8>() = true;
+                if constexpr (PIN == 7) reg_t::template Bits<GPIO_BSRR_BS7>() = true;
+                if constexpr (PIN == 6) reg_t::template Bits<GPIO_BSRR_BS6>() = true;
+                if constexpr (PIN == 5) reg_t::template Bits<GPIO_BSRR_BS5>() = true;
+                if constexpr (PIN == 4) reg_t::template Bits<GPIO_BSRR_BS4>() = true;
+                if constexpr (PIN == 3) reg_t::template Bits<GPIO_BSRR_BS3>() = true;
+                if constexpr (PIN == 2) reg_t::template Bits<GPIO_BSRR_BS2>() = true;
+                if constexpr (PIN == 1) reg_t::template Bits<GPIO_BSRR_BS1>() = true;
+                if constexpr (PIN == 0) reg_t::template Bits<GPIO_BSRR_BS0>() = true;
+            }
+            void Reset() noexcept
+            {
+                if constexpr (PIN == 15) reg_t::template Bits<GPIO_BSRR_BR15>() = true;
+                if constexpr (PIN == 14) reg_t::template Bits<GPIO_BSRR_BR14>() = true;
+                if constexpr (PIN == 13) reg_t::template Bits<GPIO_BSRR_BR13>() = true;
+                if constexpr (PIN == 12) reg_t::template Bits<GPIO_BSRR_BR12>() = true;
+                if constexpr (PIN == 11) reg_t::template Bits<GPIO_BSRR_BR11>() = true;
+                if constexpr (PIN == 10) reg_t::template Bits<GPIO_BSRR_BR10>() = true;
+                if constexpr (PIN == 9) reg_t::template Bits<GPIO_BSRR_BR9>() = true;
+                if constexpr (PIN == 8) reg_t::template Bits<GPIO_BSRR_BR8>() = true;
+                if constexpr (PIN == 7) reg_t::template Bits<GPIO_BSRR_BR7>() = true;
+                if constexpr (PIN == 6) reg_t::template Bits<GPIO_BSRR_BR6>() = true;
+                if constexpr (PIN == 5) reg_t::template Bits<GPIO_BSRR_BR5>() = true;
+                if constexpr (PIN == 4) reg_t::template Bits<GPIO_BSRR_BR4>() = true;
+                if constexpr (PIN == 3) reg_t::template Bits<GPIO_BSRR_BR3>() = true;
+                if constexpr (PIN == 2) reg_t::template Bits<GPIO_BSRR_BR2>() = true;
+                if constexpr (PIN == 1) reg_t::template Bits<GPIO_BSRR_BR1>() = true;
+                if constexpr (PIN == 0) reg_t::template Bits<GPIO_BSRR_BR0>() = true;
+            }
+            BSRR& operator = (bool input) noexcept
+            {
+                (input) ? Set() : Reset();
+                return *this;
+            }
+        };
 
-    private:
-        auto LCKK() noexcept { return reg_t::template Bits<GPIO_LCKR_LCKK_Msk>(); }
-
-    public:
-        auto LCK() noexcept
+        template <Port PORT, uint8_t PIN, uint32_t ADDR>
+        struct BRR : public u32_reg_t<ADDR>
         {
-            if constexpr (Pin == 0) return reg_t::template Bits<GPIO_LCKR_LCK0_Msk>();
-            if constexpr (Pin == 1) return reg_t::template Bits<GPIO_LCKR_LCK1_Msk>();
-            if constexpr (Pin == 2) return reg_t::template Bits<GPIO_LCKR_LCK2_Msk>();
-            if constexpr (Pin == 3) return reg_t::template Bits<GPIO_LCKR_LCK3_Msk>();
-            if constexpr (Pin == 4) return reg_t::template Bits<GPIO_LCKR_LCK4_Msk>();
-            if constexpr (Pin == 5) return reg_t::template Bits<GPIO_LCKR_LCK5_Msk>();
-            if constexpr (Pin == 6) return reg_t::template Bits<GPIO_LCKR_LCK6_Msk>();
-            if constexpr (Pin == 7) return reg_t::template Bits<GPIO_LCKR_LCK7_Msk>();
-            if constexpr (Pin == 8) return reg_t::template Bits<GPIO_LCKR_LCK8_Msk>();
-            if constexpr (Pin == 9) return reg_t::template Bits<GPIO_LCKR_LCK9_Msk>();
-            if constexpr (Pin == 10) return reg_t::template Bits<GPIO_LCKR_LCK10_Msk>();
-            if constexpr (Pin == 11) return reg_t::template Bits<GPIO_LCKR_LCK11_Msk>();
-            if constexpr (Pin == 12) return reg_t::template Bits<GPIO_LCKR_LCK12_Msk>();
-            if constexpr (Pin == 13) return reg_t::template Bits<GPIO_LCKR_LCK13_Msk>();
-            if constexpr (Pin == 14) return reg_t::template Bits<GPIO_LCKR_LCK14_Msk>();
-            if constexpr (Pin == 15) return reg_t::template Bits<GPIO_LCKR_LCK15_Msk>();
-        }
-        bool IsLocked() noexcept
-        {
-            return LCKK();
-        }
-        bool Lock() noexcept
-        {
-            if (IsLocked()) { return false; }
-            
-            // Lock key write sequence
-            LCKK() = true;
-            LCKK() = false;
-            LCKK() = true;
-            while(LCKK());
-            return (LCKK()) ? true : false;
-        }
-    };
+            using reg_t = u32_reg_t<ADDR>;
+            using reg_t::reg_t;
 
-    template <uint8_t Port, uint8_t Pin>
-    struct GPIOx
-    {
-        using CRx_t = CRx<Port, Pin>;
-        using IDR_t = IDR<Port, Pin, GetPortBase(Port) + offsetof(GPIO_TypeDef, IDR)>;
-        using ODR_t = ODR<Port, Pin, GetPortBase(Port) + offsetof(GPIO_TypeDef, ODR)>;
-        using BSRR_t = BSRR<Port, Pin, GetPortBase(Port) + offsetof(GPIO_TypeDef, BSRR)>;
-        using BRR_t = BRR<Port, Pin, GetPortBase(Port) + offsetof(GPIO_TypeDef, BRR)>;
-        using LCKR_t = LCKR<Port, Pin, GetPortBase(Port) + offsetof(GPIO_TypeDef, LCKR)>;
-    };
+            void Reset() noexcept
+            {
+                if constexpr (PIN == 15) reg_t::template Bits<GPIO_BRR_BR15>() = true;
+                if constexpr (PIN == 14) reg_t::template Bits<GPIO_BRR_BR14>() = true;
+                if constexpr (PIN == 13) reg_t::template Bits<GPIO_BRR_BR13>() = true;
+                if constexpr (PIN == 12) reg_t::template Bits<GPIO_BRR_BR12>() = true;
+                if constexpr (PIN == 11) reg_t::template Bits<GPIO_BRR_BR11>() = true;
+                if constexpr (PIN == 10) reg_t::template Bits<GPIO_BRR_BR10>() = true;
+                if constexpr (PIN == 9) reg_t::template Bits<GPIO_BRR_BR9>() = true;
+                if constexpr (PIN == 8) reg_t::template Bits<GPIO_BRR_BR8>() = true;
+                if constexpr (PIN == 7) reg_t::template Bits<GPIO_BRR_BR7>() = true;
+                if constexpr (PIN == 6) reg_t::template Bits<GPIO_BRR_BR6>() = true;
+                if constexpr (PIN == 5) reg_t::template Bits<GPIO_BRR_BR5>() = true;
+                if constexpr (PIN == 4) reg_t::template Bits<GPIO_BRR_BR4>() = true;
+                if constexpr (PIN == 3) reg_t::template Bits<GPIO_BRR_BR3>() = true;
+                if constexpr (PIN == 2) reg_t::template Bits<GPIO_BRR_BR2>() = true;
+                if constexpr (PIN == 1) reg_t::template Bits<GPIO_BRR_BR1>() = true;
+                if constexpr (PIN == 0) reg_t::template Bits<GPIO_BRR_BR0>() = true;
+            }
+        };
+
+        template <Port PORT, uint8_t PIN, uint32_t ADDR>
+        struct LCKR : public u32_reg_t<ADDR>
+        {
+            using reg_t = u32_reg_t<ADDR>;
+            using reg_t::reg_t;
+
+        private:
+            auto LCKK() noexcept { return reg_t::template Bits<GPIO_LCKR_LCKK>(); }
+
+        public:
+            auto LCK() noexcept
+            {
+                if constexpr (PIN == 15) return reg_t::template Bits<GPIO_LCKR_LCK15>();
+                if constexpr (PIN == 14) return reg_t::template Bits<GPIO_LCKR_LCK14>();
+                if constexpr (PIN == 13) return reg_t::template Bits<GPIO_LCKR_LCK13>();
+                if constexpr (PIN == 12) return reg_t::template Bits<GPIO_LCKR_LCK12>();
+                if constexpr (PIN == 11) return reg_t::template Bits<GPIO_LCKR_LCK11>();
+                if constexpr (PIN == 10) return reg_t::template Bits<GPIO_LCKR_LCK10>();
+                if constexpr (PIN == 9) return reg_t::template Bits<GPIO_LCKR_LCK9>();
+                if constexpr (PIN == 8) return reg_t::template Bits<GPIO_LCKR_LCK8>();
+                if constexpr (PIN == 7) return reg_t::template Bits<GPIO_LCKR_LCK7>();
+                if constexpr (PIN == 6) return reg_t::template Bits<GPIO_LCKR_LCK6>();
+                if constexpr (PIN == 5) return reg_t::template Bits<GPIO_LCKR_LCK5>();
+                if constexpr (PIN == 4) return reg_t::template Bits<GPIO_LCKR_LCK4>();
+                if constexpr (PIN == 3) return reg_t::template Bits<GPIO_LCKR_LCK3>();
+                if constexpr (PIN == 2) return reg_t::template Bits<GPIO_LCKR_LCK2>();
+                if constexpr (PIN == 1) return reg_t::template Bits<GPIO_LCKR_LCK1>();
+                if constexpr (PIN == 0) return reg_t::template Bits<GPIO_LCKR_LCK0>();
+            }
+            bool IsLocked() noexcept
+            {
+                return LCKK();
+            }
+            bool Lock() noexcept
+            {
+                if (IsLocked()) { return false; }
+
+                // Lock key write sequence
+                LCKK() = 1u;
+                LCKK() = 0u;
+                LCKK() = 1u;
+                auto temp = LCKK();
+                (void)temp;
+                return (LCKK()) ? true : false;
+            }
+        };
+
+        template <Port PORT, uint8_t PIN>
+        struct Registers
+        {
+            using CRx_t = CRx<PORT, PIN>;
+            using IDR_t = IDR<PORT, PIN, GetBase(PORT) + offsetof(GPIO_TypeDef, IDR)>;
+            using ODR_t = ODR<PORT, PIN, GetBase(PORT) + offsetof(GPIO_TypeDef, ODR)>;
+            using BSRR_t = BSRR<PORT, PIN, GetBase(PORT) + offsetof(GPIO_TypeDef, BSRR)>;
+            using BRR_t = BRR<PORT, PIN, GetBase(PORT) + offsetof(GPIO_TypeDef, BRR)>;
+            using LCKR_t = LCKR<PORT, PIN, GetBase(PORT) + offsetof(GPIO_TypeDef, LCKR)>;
+        };
+    }
 }

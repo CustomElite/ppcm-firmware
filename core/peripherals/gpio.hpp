@@ -1,79 +1,53 @@
 #pragma once
 
-#include "gpio.hpp"
 #include "macros.h"
 #include "tools.hpp"
 
 #include "gpio_registers.hpp"
 
-namespace Peripheral::GPIO 
+namespace Peripherals::IO 
 {
-    enum class Port : uint8_t
-    {
-        A = 0u,
-        B,
-        C,
-        D,
-        E
-    };
+    using namespace Settings;
+
     enum class State : bool
     {
         Low = false,
         High = true
     };
-    enum class Input : uint8_t
+
+    template <Port PORT>
+    struct PortClockKernal
     {
-        Analog = 0u,
-        Floating,
-        PullResistor
-    };
-    enum class InputResistor : uint8_t
-    {
-        PullDown = 0,
-        PullUp
-    };
-    enum class PushPull : uint8_t
-    {
-        _10MHz = 1u,
-        _2MHz,
-        _50MHz
-    };
-    enum class OpenDrain : uint8_t
-    {
-        _10MHz = 1u,
-        _2MHz,
-        _50MHz
-    };
-    enum class Alternate : uint8_t
-    {
-        PushPull = 2u,
-        OpenDrain
+        
+        static void Construct() noexcept
+        {
+            
+        }
     };
 
-    template <Port port, uint8_t pin>
-    class Module
+    template <Port PORT, uint8_t PIN>
+    class Pin
     {
+        static_assert((PIN >= 0) && (PIN <= 15u), "Pin number does not exist. Only pins 0-15 are valid.");
     public:
-        static_assert((pin >= 0) && (pin <= 15u), "Pin number does not exist. Only pins 0-15 are valid.");
-
         template <typename... Args>
-        ALWAYS_INLINE Module(Args... args) noexcept
+        ALWAYS_INLINE Pin(Args... args) noexcept
         {
             RCC->APB2ENR |= clk_msk;
             Configure(args ...);
         }
-        ~Module() noexcept
+        ~Pin() noexcept
         {
             RCC->APB2RSTR |= clk_msk;
             RCC->APB2RSTR &= ~clk_msk;
         }
         template <typename T>
-        ALWAYS_INLINE Module& operator = (T input) noexcept
+        ALWAYS_INLINE Pin& operator = (T input) noexcept
         {
             Set(input);
             return *this;
         }
-        ALWAYS_INLINE Module& operator = (const bool input) noexcept
+        ALWAYS_INLINE Pin& operator = (bool input) noexcept
         {
             Set((State)input);
             return *this;
@@ -97,7 +71,7 @@ namespace Peripheral::GPIO
         }
 
     private:
-        using REGS = RegisterMap::GPIOx<General::EnumValue(port), pin>;
+        using REGS = RegisterMap::Registers<PORT, PIN>;
         using CRx = typename REGS::CRx_t;
         using IDR = typename REGS::IDR_t;
         using ODR = typename REGS::ODR_t;
@@ -105,35 +79,31 @@ namespace Peripheral::GPIO
         using BRR = typename REGS::BRR_t;
         using LCKR = typename REGS::LCKR_t;
 
-        constexpr static uint32_t clk_msk = (1u << (General::EnumValue(port) + 2u));
+        constexpr static uint32_t clk_msk = (1u << (Common::Tools::EnumValue(PORT) + 2u));
 
-        ALWAYS_INLINE static void Set(Input input) noexcept
+        ALWAYS_INLINE static void Set(InputMode input) noexcept
         {
-            CRx().MODE() = false;
-            CRx().CNF() = General::EnumValue(input);
+            CRx{}.ConfigureInput(input);
         }
-        ALWAYS_INLINE static void Set(PushPull input) noexcept
+        ALWAYS_INLINE static void Set(OutputMode input) noexcept
         {
-            CRx().MODE() = General::EnumValue(input);
-            CRx().CNF() = false;
-        }
-        ALWAYS_INLINE static void Set(OpenDrain input) noexcept
-        {
-            CRx().MODE() = General::EnumValue(input);
-            CRx().CNF() = true;
+            CRx{}.ConfigureOutput(input);
         }
         ALWAYS_INLINE static void Set(Alternate input) noexcept
         {
-            CRx().MODE() = true;
-            CRx().CNF() = General::EnumValue(input);
+            CRx{}.ConfigureAlternate(input);
         }
-        ALWAYS_INLINE static void Set(InputResistor input) noexcept
+        ALWAYS_INLINE static void Set(OutputSpeed input) noexcept
         {
-            ODR().OD() = General::EnumValue(input);
+            CRx{}.MODE() = Common::Tools::EnumValue(input);
+        }
+        ALWAYS_INLINE static void Set(PullResistor input) noexcept
+        {
+            ODR{}.OD() = Common::Tools::EnumValue(input);
         }
         ALWAYS_INLINE static void Set(bool input) noexcept
         {
-            BSRR() = input;
+            BSRR{} = input;
         }
         ALWAYS_INLINE static void Set(State input) noexcept
         {

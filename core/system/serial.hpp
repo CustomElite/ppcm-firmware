@@ -2,11 +2,8 @@
 
 #include "gpio.hpp"
 #include "interrupt.hpp"
-
-#include "stm32f1xx_ll_bus.h"
-#include "stm32f1xx_ll_rcc.h"
-#include "stm32f1xx_ll_usart.h"
-#include "stm32f1xx_ll_gpio.h"
+#include "mcu_config.hpp"
+#include "rcc.hpp"
 
 #include <optional>
 #include <etl/singleton.h>
@@ -16,6 +13,9 @@
 
 namespace System
 {
+    using namespace Peripherals;
+    using namespace Common::Tools;
+    
     class Serial
     {
     public:
@@ -27,13 +27,14 @@ namespace System
     public:
         Serial(USART_TypeDef* instance, size_t baud_rate = 9600u) noexcept
             : m_usart{ instance },
-            m_tx{Peripheral::GPIO::Alternate::PushPull},
-            m_rx{Peripheral::GPIO::Input::PullResistor, Peripheral::GPIO::InputResistor::PullUp},
-            m_isr{ delegate_t::template create<Serial, &Serial::interrupt_handler>(*this) },
-            m_rxBuffer{}
+            m_tx{IO::Alternate::PushPull},
+            m_rx{IO::InputMode::PuPd, IO::PullResistor::PullUp},
+            m_rxBuffer{},
+            m_isr{ delegate_t::template create<Serial, &Serial::interrupt_handler>(*this) }
+            //m_isr{ []() }
         {
             if (m_usart == USART1)
-                configure(baud_rate);
+                Configure(baud_rate);
         }
 
         void Write(char input) const noexcept
@@ -62,31 +63,24 @@ namespace System
         using interrupt_t = System::Interrupt<Serial, InterruptSource::eUSART1, 5u>;
         using delegate_t = interrupt_t::delegate_t;
 
-        using TX_Pin = Peripheral::GPIO::Module<Peripheral::GPIO::Port::A, 9>;
-        using RX_Pin = Peripheral::GPIO::Module<Peripheral::GPIO::Port::A, 10>;
+        using TX_Pin = IO::Pin<IO::Port::A, 9>;
+        using RX_Pin = IO::Pin<IO::Port::A, 10>;
 
     private:
         USART_TypeDef* const m_usart;
         TX_Pin m_tx;
         RX_Pin m_rx;
-        const interrupt_t m_isr;
-
 
         buffer_t m_rxBuffer;
 
+        const interrupt_t m_isr;
+
     private:
-        void configure(size_t baud_rate) const noexcept
+        void Configure(size_t baud_rate) const noexcept
         {
             /* Peripheral clock enable */
-            LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
-
-            /* USART1 GPIO Configuration */
-            //LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_9, LL_GPIO_MODE_ALTERNATE);
-            //LL_GPIO_SetPinSpeed(GPIOA, LL_GPIO_PIN_9, LL_GPIO_SPEED_FREQ_HIGH);
-            //LL_GPIO_SetPinOutputType(GPIOA, LL_GPIO_PIN_9, LL_GPIO_OUTPUT_PUSHPULL);
-
-            //LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_10, LL_GPIO_MODE_FLOATING);
-            //LL_GPIO_SetPinPull(GPIOA, LL_GPIO_PIN_10, LL_GPIO_PULL_UP);
+            //LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
+            ResetClockControl::PeripheralClockControl<ResetClockControl::Peripheral::eUSART1>::Power();
 
             /* UART Configuration */
             LL_USART_SetTransferDirection(USART1, LL_USART_DIRECTION_TX_RX);

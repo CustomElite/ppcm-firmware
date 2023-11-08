@@ -4,7 +4,7 @@
 
 #include <etl/private/delegate_cpp11.h>
 
-namespace Peripheral 
+namespace Peripherals 
 {
     class SysTickModule
     {

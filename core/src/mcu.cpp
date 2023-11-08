@@ -11,7 +11,7 @@ namespace MCU
         LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
         while(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_0) {}
 
-        LL_RCC_HSE_Enable();
+        /*LL_RCC_HSE_Enable();
         while(!LL_RCC_HSE_IsReady()) {}
 
         LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
@@ -20,7 +20,7 @@ namespace MCU
         LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSE);
         while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSE) {}
 
-        SystemCoreClock = HSE_VALUE;
+        SystemCoreClock = HSE_VALUE;*/
     }
 
     void GPIO_Init() noexcept

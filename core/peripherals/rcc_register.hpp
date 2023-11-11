@@ -5,7 +5,7 @@
 
 #include "stm32f1xx.h"
 
-namespace Peripherals::ResetClockControl 
+namespace Peripherals::CLK 
 {
     namespace Settings 
     {
@@ -83,7 +83,7 @@ namespace Peripherals::ResetClockControl
         };
     }
 
-    namespace Registers
+    namespace RegisterMap
     {
         using namespace Settings;
 

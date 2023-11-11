@@ -1,6 +1,8 @@
 #pragma once
 
 #include "macros.h"
+#include "rcc.hpp"
+#include "run_once.hpp"
 #include "tools.hpp"
 
 #include "gpio_registers.hpp"
@@ -9,45 +11,93 @@ namespace Peripherals::IO
 {
     using namespace Settings;
 
+    enum class Port : uint8_t
+    {
+        A = 0u,
+        B,
+        C,
+        D,
+        E
+    };
+
     enum class State : bool
     {
         Low = false,
         High = true
     };
 
-    template <Port PORT>
-    struct PortClockKernal
+    template <Port P>
+    struct PortClockHelper{};
+
+    template <>
+    struct PortClockHelper<Port::A>
     {
-        
+        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOA>;
+    };
+    template <>
+    struct PortClockHelper<Port::B>
+    {
+        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOB>;
+    };
+    template <>
+    struct PortClockHelper<Port::C>
+    {
+        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOC>;
+    };
+    template <>
+    struct PortClockHelper<Port::D>
+    {
+        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOD>;
+    };
+    template <>
+    struct PortClockHelper<Port::E>
+    {
+        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOE>;
+    };
+
+    template <Port P>
+    class Kernal
+    {
+        using clk_t = typename PortClockHelper<P>::type;
+
         static void Construct() noexcept
         {
-            
+            clk_t::Power(CLK::State::On);
+        }
+        static void Destruct() noexcept
+        {
+            if (!clk_t::Reset()) { clk_t::Power(CLK::State::Off); }
+        }
+
+    private:
+        constexpr auto GetClockWidget() noexcept
+        {
+            if constexpr (P == Port::A) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOA>{}; }
+            if constexpr (P == Port::B) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOB>{}; }
+            if constexpr (P == Port::C) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOC>{}; }
+            if constexpr (P == Port::D) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOD>{}; }
+            if constexpr (P == Port::E) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOE>{}; }
         }
     };
 
-    template <Port PORT, uint8_t PIN>
-    class Pin
+    template <Port PORT, size_t PIN>
+    class Module
     {
         static_assert((PIN >= 0) && (PIN <= 15u), "Pin number does not exist. Only pins 0-15 are valid.");
+
     public:
         template <typename... Args>
-        ALWAYS_INLINE Pin(Args... args) noexcept
+        ALWAYS_INLINE Module(Args... args) noexcept
         {
-            RCC->APB2ENR |= clk_msk;
             Configure(args ...);
         }
-        ~Pin() noexcept
-        {
-            RCC->APB2RSTR |= clk_msk;
-            RCC->APB2RSTR &= ~clk_msk;
-        }
         template <typename T>
-        ALWAYS_INLINE Pin& operator = (T input) noexcept
+        ALWAYS_INLINE Module& operator = (T input) noexcept
         {
             Set(input);
             return *this;
         }
-        ALWAYS_INLINE Pin& operator = (bool input) noexcept
+        ALWAYS_INLINE Module& operator = (bool input) noexcept
         {
             Set((State)input);
             return *this;
@@ -71,7 +121,7 @@ namespace Peripherals::IO
         }
 
     private:
-        using REGS = RegisterMap::Registers<PORT, PIN>;
+        using REGS = RegisterMap::Registers<Tools::EnumValue(PORT), PIN>;
         using CRx = typename REGS::CRx_t;
         using IDR = typename REGS::IDR_t;
         using ODR = typename REGS::ODR_t;
@@ -79,19 +129,20 @@ namespace Peripherals::IO
         using BRR = typename REGS::BRR_t;
         using LCKR = typename REGS::LCKR_t;
 
-        constexpr static uint32_t clk_msk = (1u << (Common::Tools::EnumValue(PORT) + 2u));
+        Common::RunOnce<Kernal<PORT>> m_clk{};
+        //constexpr static uint32_t clk_msk = (1u << (Common::Tools::EnumValue(PORT) + 2u));
 
-        ALWAYS_INLINE static void Set(InputMode input) noexcept
+        ALWAYS_INLINE static void Set(Input input) noexcept
         {
-            CRx{}.ConfigureInput(input);
+            CRx{}.ConfigureMode(input);
         }
-        ALWAYS_INLINE static void Set(OutputMode input) noexcept
+        ALWAYS_INLINE static void Set(Output input) noexcept
         {
-            CRx{}.ConfigureOutput(input);
+            CRx{}.ConfigureMode(input);
         }
         ALWAYS_INLINE static void Set(Alternate input) noexcept
         {
-            CRx{}.ConfigureAlternate(input);
+            CRx{}.ConfigureMode(input);
         }
         ALWAYS_INLINE static void Set(OutputSpeed input) noexcept
         {

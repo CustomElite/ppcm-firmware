@@ -1,13 +1,11 @@
 #pragma once
 
-#include <etl/private/delegate_cpp11.h>
-#include <stddef.h>
-#include <type_traits>
-#include <utility>
-
 #include "macros.h"
-#include "stm32f103xb.h"
+#include "math.hpp"
 #include "tools.hpp"
+
+#include "stm32f1xx.h"
+#include <new>
 
 namespace System 
 {
@@ -70,14 +68,15 @@ namespace System
         eUSBWakeUp = USBWakeUp_IRQn      
     };
 
-    template <InterruptSource Source>
+    template <InterruptSource SRC>
     constexpr bool IsEnablable() noexcept
     {
-        return (Common::Tools::EnumValue(Source) >= 0);
+        return (Common::Tools::EnumValue(SRC) >= 0);
     }
 
-    template <typename Key>
-    class iInterruptDelegator
+#if 0
+    template <InterruptSource SRC>
+    class InterruptDelegator
     {
     public:
         using delegate_t = etl::delegate<void(void)>;
@@ -88,7 +87,7 @@ namespace System
         }
 
     protected:
-        ALWAYS_INLINE static bool Register(const delegate_t& isr_delegate) noexcept
+        ALWAYS_INLINE static bool Register(delegate_t const &isr_delegate) noexcept
         {
             if (m_delegate.is_valid()) return false;
 
@@ -106,38 +105,82 @@ namespace System
     private:
         inline static delegate_t m_delegate{};
     };
-
-    template <InterruptSource Source>
-    using InterruptDelegator = iInterruptDelegator<typename std::integral_constant<InterruptSource, Source>::type>;
-
-    template <typename T, InterruptSource Source, uint8_t Priority = 5u>
-    class Interrupt : InterruptDelegator<Source>
+#endif
+    template <InterruptSource SRC>
+    class InterruptDelegator
     {
     public:
-        using base_t = InterruptDelegator<Source>;
-        using delegate_t = typename base_t::delegate_t;
+        using function_t = void(*)();
 
-        ALWAYS_INLINE Interrupt(delegate_t&& isr_delegate) noexcept
+        ALWAYS_INLINE static void Call() noexcept
         {
-            if (base_t::Register(isr_delegate))
+            if (s_callback) { s_callback(); }
+        }
+
+    protected:
+        ALWAYS_INLINE static bool Register(function_t const &callback) noexcept
+        {
+            function_t * const volatile ptr = &s_callback;
+
+            if (*ptr == nullptr)
             {
-                if constexpr (IsEnablable<Source>())
+                *ptr = callback;
+                return true;
+            }
+
+            return false;
+        }
+        ALWAYS_INLINE static bool Unregister() noexcept
+        {
+            s_callback = nullptr;
+            return true;
+        }
+        ALWAYS_INLINE static bool Registered() noexcept
+        {
+            return (s_callback != nullptr);
+        }
+
+    private:
+        inline static function_t s_callback{nullptr};
+    };
+    
+    template <typename MODULE, InterruptSource SRC, std::size_t PRI = 5u>
+    class Interrupt : InterruptDelegator<SRC>
+    {
+    public:
+        using base_t = InterruptDelegator<SRC>;
+        using isr_function_t = typename base_t::function_t;
+
+        ALWAYS_INLINE Interrupt(isr_function_t const &isr) noexcept
+        {
+            if (base_t::Register(isr))
+            {
+                if constexpr (IsEnablable<SRC>())
                 {
-                    __NVIC_SetPriority((IRQn_Type)Source, NVIC_EncodePriority(__NVIC_GetPriorityGrouping(), Priority, 0));
-                    __NVIC_EnableIRQ((IRQn_Type)Source);
+                    __NVIC_SetPriority
+                    (
+                        (IRQn_Type)SRC, 
+                        NVIC_EncodePriority
+                        (
+                            __NVIC_GetPriorityGrouping(), 
+                            Common::Math::Minimum(PRI, 15u), 
+                            0
+                        )
+                    );
+                    __NVIC_EnableIRQ((IRQn_Type)SRC);
                 }
             }
         }
         ALWAYS_INLINE Interrupt() noexcept
-            : Interrupt{ delegate_t::template create<T::Interrupt>() } 
+            : Interrupt{ MODULE::Interrupt } 
         {}
         ALWAYS_INLINE ~Interrupt() noexcept
         {
-            if (base_t::IsValid())
+            if (base_t::Registered())
             {
                 base_t::Unregister();
-                if constexpr (IsEnablable<Source>())
-                    __NVIC_DisableIRQ((IRQn_Type)Source);
+                if constexpr (IsEnablable<SRC>())
+                    __NVIC_DisableIRQ((IRQn_Type)SRC);
             }
         }
     };

@@ -4,6 +4,7 @@
 #include "interrupt.hpp"
 #include "mcu_config.hpp"
 #include "rcc.hpp"
+#include "static_lambda.hpp"
 
 #include <optional>
 #include <etl/singleton.h>
@@ -28,10 +29,15 @@ namespace System
         Serial(USART_TypeDef* instance, size_t baud_rate = 9600u) noexcept
             : m_usart{ instance },
             m_tx{IO::Alternate::PushPull},
-            m_rx{IO::InputMode::PuPd, IO::PullResistor::PullUp},
+            m_rx{IO::Input::PuPd, IO::PullResistor::PullUp},
             m_rxBuffer{},
-            m_isr{ delegate_t::template create<Serial, &Serial::interrupt_handler>(*this) }
-            //m_isr{ []() }
+            //m_isr{ delegate_t::template create<Serial, &Serial::interrupt_handler>(*this) }
+            m_isr{ 
+                [&](){
+                    if (LL_USART_IsActiveFlag_RXNE(Get().m_usart))
+                    Get().m_rxBuffer.push(LL_USART_ReceiveData8(Get().m_usart));
+                } 
+            }
         {
             if (m_usart == USART1)
                 Configure(baud_rate);
@@ -61,13 +67,13 @@ namespace System
     private:
         using buffer_t = etl::queue_spsc_atomic<char, 64u, etl::memory_model::MEMORY_MODEL_SMALL>;
         using interrupt_t = System::Interrupt<Serial, InterruptSource::eUSART1, 5u>;
-        using delegate_t = interrupt_t::delegate_t;
+        using callback_t = Common::StaticLambda<typename T>
 
-        using TX_Pin = IO::Pin<IO::Port::A, 9>;
-        using RX_Pin = IO::Pin<IO::Port::A, 10>;
+        using TX_Pin = IO::Module<IO::Port::A, 9>;
+        using RX_Pin = IO::Module<IO::Port::A, 10>;
 
     private:
-        USART_TypeDef* const m_usart;
+        USART_TypeDef * const m_usart;
         TX_Pin m_tx;
         RX_Pin m_rx;
 
@@ -79,8 +85,7 @@ namespace System
         void Configure(size_t baud_rate) const noexcept
         {
             /* Peripheral clock enable */
-            //LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
-            ResetClockControl::PeripheralClockControl<ResetClockControl::Peripheral::eUSART1>::Power();
+            CLK::ClockWidget<CLK::Clock::APB2_USART1>::Power();
 
             /* UART Configuration */
             LL_USART_SetTransferDirection(USART1, LL_USART_DIRECTION_TX_RX);

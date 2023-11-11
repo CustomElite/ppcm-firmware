@@ -16,20 +16,19 @@ int main()
 {
     __NVIC_SetPriorityGrouping((std::uint32_t)3u);
 
-    MCU::Clock_Init();
     MCU::GPIO_Init();
 
     serial_t::create(USART1, 19200);
     auto& serial = serial_t::instance();
 
     SysTickModule sysTick(1000u);
-    STATUS_LED led{IO::OutputMode::PushPull, IO::State::High};
+    STATUS_LED led{IO::Output::PushPull, IO::State::High};
 
     printf_("\n");
-    printf_("System Clock: %ihz\n", sysclk_t::SYSCLK());
-    printf_("AHB Clock: %ihz\n", sysclk_t::AHBCLK());
-    printf_("APB2 Clock: %ihz\n", sysclk_t::APB2CLK());
-    printf_("APB1 Clock: %ihz\n", sysclk_t::APB1CLK());
+    printf_("System Clock: %ihz\n", (int)sysclk_t::SYSCLK());
+    printf_("AHB Clock: %ihz\n", (int)sysclk_t::AHBCLK());
+    printf_("APB2 Clock: %ihz\n", (int)sysclk_t::APB2CLK());
+    printf_("APB1 Clock: %ihz\n", (int)sysclk_t::APB1CLK());
 
     while (1) 
     {

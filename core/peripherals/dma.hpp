@@ -2,7 +2,7 @@
 
 #include "dma_registers.hpp"
 
-namespace Peripheral::DMA
+namespace Peripherals::DMA
 {
 
 }

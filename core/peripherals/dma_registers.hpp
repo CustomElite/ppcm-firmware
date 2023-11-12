@@ -5,7 +5,7 @@
 
 #include "stm32f1xx.h"
 
-namespace Peripheral::DMA
+namespace Peripherals::DMA
 {
     namespace Settings
     {

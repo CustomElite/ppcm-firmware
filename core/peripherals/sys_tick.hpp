@@ -4,17 +4,17 @@
 
 #include <etl/private/delegate_cpp11.h>
 
-namespace Peripherals 
+namespace Peripherals::SYSTICK
 {
-    class SysTickModule
+    class Module
     {
     private:
-        using interrupt_t = System::Interrupt<SysTickModule, System::InterruptSource::eSysTick, 1u>;
+        using interrupt_t = ISR::Interrupt<Module, ISR::InterruptSource::eSysTick, 1u>;
 
         inline static volatile uint64_t m_count = 0;
 
     public:
-        SysTickModule(const uint32_t frequency) noexcept
+        Module(const uint32_t frequency) noexcept
         {
             SysTick->LOAD = static_cast<uint32_t>((SystemCoreClock / frequency) - 1ull);
             SysTick->VAL = 0ul;
@@ -39,7 +39,7 @@ namespace Peripherals
         }
     
     private:
-        const interrupt_t m_interrupt{};
+        interrupt_t const m_interrupt{};
     };
 
 }

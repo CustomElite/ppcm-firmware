@@ -18,7 +18,7 @@ namespace Peripherals::CLK
         Off = false,
         On = true
     };
-    enum class Clock : uint8_t
+    enum class PeriphClock : uint8_t
     {
         APB1_TIM2 = 0,
         APB1_TIM3,
@@ -54,75 +54,74 @@ namespace Peripherals::CLK
         AHB_SRAM
     };
 
-    template <Clock P>
-    struct ClockWidget
+    template <PeriphClock P>
+    struct ClockControl
     {
         static void Power(const State input = State::On) noexcept
         {
             using namespace Common::Tools;
             using namespace RegisterMap;
             
-            if constexpr(P == Clock::APB2_AFIO)   { APB2ENR{}.AFIOEN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_GPIOA)  { APB2ENR{}.IOPAEN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_GPIOB)  { APB2ENR{}.IOPBEN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_GPIOC)  { APB2ENR{}.IOPCEN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_GPIOD)  { APB2ENR{}.IOPDEN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_GPIOE)  { APB2ENR{}.IOPEEN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_ADC1)   { APB2ENR{}.ADC1EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_ADC2)   { APB2ENR{}.ADC2EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_TIM1)   { APB2ENR{}.TIM1EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_SPI1)   { APB2ENR{}.SPI1EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB2_USART1) { APB2ENR{}.USART1EN() = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_AFIO)   { APB2ENR{}.AFIOEN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_GPIOA)  { APB2ENR{}.IOPAEN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_GPIOB)  { APB2ENR{}.IOPBEN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_GPIOC)  { APB2ENR{}.IOPCEN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_GPIOD)  { APB2ENR{}.IOPDEN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_GPIOE)  { APB2ENR{}.IOPEEN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_ADC1)   { APB2ENR{}.ADC1EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_ADC2)   { APB2ENR{}.ADC2EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_TIM1)   { APB2ENR{}.TIM1EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_SPI1)   { APB2ENR{}.SPI1EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB2_USART1) { APB2ENR{}.USART1EN() = EnumValue(input); }
             
-            if constexpr(P == Clock::APB1_TIM2)   { APB1ENR{}.TIM2EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB1_TIM3)   { APB1ENR{}.TIM3EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB1_TIM4)   { APB1ENR{}.TIM4EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB1_WWDG)   { APB1ENR{}.WWDGEN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB1_SPI2)   { APB1ENR{}.SPI2EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB1_USART2) { APB1ENR{}.USART2EN() = EnumValue(input); }
-            if constexpr(P == Clock::APB1_USART3) { APB1ENR{}.USART3EN() = EnumValue(input); }
-            if constexpr(P == Clock::APB1_I2C1)   { APB1ENR{}.I2C1EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB1_I2C2)   { APB1ENR{}.I2C2EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB1_CAN1)   { APB1ENR{}.CAN1EN()   = EnumValue(input); }
-            if constexpr(P == Clock::APB1_BKP)    { APB1ENR{}.BKPEN()    = EnumValue(input); }
-            if constexpr(P == Clock::APB1_PWR)    { APB1ENR{}.PWREN()    = EnumValue(input); }
-            if constexpr(P == Clock::APB1_USB)    { APB1ENR{}.USBEN()    = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_TIM2)   { APB1ENR{}.TIM2EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_TIM3)   { APB1ENR{}.TIM3EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_TIM4)   { APB1ENR{}.TIM4EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_WWDG)   { APB1ENR{}.WWDGEN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_SPI2)   { APB1ENR{}.SPI2EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_USART2) { APB1ENR{}.USART2EN() = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_USART3) { APB1ENR{}.USART3EN() = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_I2C1)   { APB1ENR{}.I2C1EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_I2C2)   { APB1ENR{}.I2C2EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_CAN1)   { APB1ENR{}.CAN1EN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_BKP)    { APB1ENR{}.BKPEN()    = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_PWR)    { APB1ENR{}.PWREN()    = EnumValue(input); }
+            if constexpr(P == PeriphClock::APB1_USB)    { APB1ENR{}.USBEN()    = EnumValue(input); }
 
-            if constexpr(P == Clock::AHB_DMA1)   { AHBENR{}.DMA1EN()    = EnumValue(input); }
-            if constexpr(P == Clock::AHB_CRC)    { AHBENR{}.CRCEN()     = EnumValue(input); }
-            if constexpr(P == Clock::AHB_FLASH)  { AHBENR{}.FLITFEN()   = EnumValue(input); }
-            if constexpr(P == Clock::AHB_SRAM)   { AHBENR{}.SRAMEN()    = EnumValue(input); }
+            if constexpr(P == PeriphClock::AHB_DMA1)   { AHBENR{}.DMA1EN()    = EnumValue(input); }
+            if constexpr(P == PeriphClock::AHB_CRC)    { AHBENR{}.CRCEN()     = EnumValue(input); }
+            if constexpr(P == PeriphClock::AHB_FLASH)  { AHBENR{}.FLITFEN()   = EnumValue(input); }
+            if constexpr(P == PeriphClock::AHB_SRAM)   { AHBENR{}.SRAMEN()    = EnumValue(input); }
         }
         static bool Reset() noexcept
         {
             using namespace RegisterMap;
 
-            if      constexpr(P == Clock::APB2_AFIO)   { APB2RSTR{}.AFIORST()   = true; APB2RSTR{}.AFIORST()   = false; return true; }
-            else if constexpr(P == Clock::APB2_GPIOA)  { APB2RSTR{}.IOPARST()   = true; APB2RSTR{}.IOPARST()   = false; return true; }           
-            else if constexpr(P == Clock::APB2_GPIOB)  { APB2RSTR{}.IOPBRST()   = true; APB2RSTR{}.IOPBRST()   = false; return true; }            
-            else if constexpr(P == Clock::APB2_GPIOC)  { APB2RSTR{}.IOPCRST()   = true; APB2RSTR{}.IOPCRST()   = false; return true; }            
-            else if constexpr(P == Clock::APB2_GPIOD)  { APB2RSTR{}.IOPDRST()   = true; APB2RSTR{}.IOPDRST()   = false; return true; }            
-            else if constexpr(P == Clock::APB2_GPIOE)  { APB2RSTR{}.IOPERST()   = true; APB2RSTR{}.IOPERST()   = false; return true; }            
-            else if constexpr(P == Clock::APB2_ADC1)   { APB2RSTR{}.ADC1RST()   = true; APB2RSTR{}.ADC1RST()   = false; return true; }            
-            else if constexpr(P == Clock::APB2_ADC2)   { APB2RSTR{}.ADC2RST()   = true; APB2RSTR{}.ADC2RST()   = false; return true; }            
-            else if constexpr(P == Clock::APB2_TIM1)   { APB2RSTR{}.TIM1RST()   = true; APB2RSTR{}.TIM1RST()   = false; return true; }            
-            else if constexpr(P == Clock::APB2_SPI1)   { APB2RSTR{}.SPI1RST()   = true; APB2RSTR{}.SPI1RST()   = false; return true; }            
-            else if constexpr(P == Clock::APB2_USART1) { APB2RSTR{}.USART1RST() = true; APB2RSTR{}.USART1RST() = false; return true; }
+            if      constexpr(P == PeriphClock::APB2_AFIO)   { APB2RSTR{}.AFIORST()   = true; APB2RSTR{}.AFIORST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB2_GPIOA)  { APB2RSTR{}.IOPARST()   = true; APB2RSTR{}.IOPARST()   = false; return true; }           
+            else if constexpr(P == PeriphClock::APB2_GPIOB)  { APB2RSTR{}.IOPBRST()   = true; APB2RSTR{}.IOPBRST()   = false; return true; }            
+            else if constexpr(P == PeriphClock::APB2_GPIOC)  { APB2RSTR{}.IOPCRST()   = true; APB2RSTR{}.IOPCRST()   = false; return true; }            
+            else if constexpr(P == PeriphClock::APB2_GPIOD)  { APB2RSTR{}.IOPDRST()   = true; APB2RSTR{}.IOPDRST()   = false; return true; }            
+            else if constexpr(P == PeriphClock::APB2_GPIOE)  { APB2RSTR{}.IOPERST()   = true; APB2RSTR{}.IOPERST()   = false; return true; }            
+            else if constexpr(P == PeriphClock::APB2_ADC1)   { APB2RSTR{}.ADC1RST()   = true; APB2RSTR{}.ADC1RST()   = false; return true; }            
+            else if constexpr(P == PeriphClock::APB2_ADC2)   { APB2RSTR{}.ADC2RST()   = true; APB2RSTR{}.ADC2RST()   = false; return true; }            
+            else if constexpr(P == PeriphClock::APB2_TIM1)   { APB2RSTR{}.TIM1RST()   = true; APB2RSTR{}.TIM1RST()   = false; return true; }            
+            else if constexpr(P == PeriphClock::APB2_SPI1)   { APB2RSTR{}.SPI1RST()   = true; APB2RSTR{}.SPI1RST()   = false; return true; }            
+            else if constexpr(P == PeriphClock::APB2_USART1) { APB2RSTR{}.USART1RST() = true; APB2RSTR{}.USART1RST() = false; return true; }
             
-            
-            else if constexpr(P == Clock::APB1_TIM2)   { APB1RSTR{}.TIM2RST()   = true; APB1RSTR{}.TIM2RST()   = false; return true; }
-            else if constexpr(P == Clock::APB1_TIM3)   { APB1RSTR{}.TIM3RST()   = true; APB1RSTR{}.TIM3RST()   = false; return true; }
-            else if constexpr(P == Clock::APB1_TIM4)   { APB1RSTR{}.TIM4RST()   = true; APB1RSTR{}.TIM4RST()   = false; return true; }
-            else if constexpr(P == Clock::APB1_WWDG)   { APB1RSTR{}.WWDGRST()   = true; APB1RSTR{}.WWDGRST()   = false; return true; }
-            else if constexpr(P == Clock::APB1_SPI2)   { APB1RSTR{}.SPI2RST()   = true; APB1RSTR{}.SPI2RST()   = false; return true; }
-            else if constexpr(P == Clock::APB1_USART2) { APB1RSTR{}.USART2RST() = true; APB1RSTR{}.USART2RST() = false; return true; }
-            else if constexpr(P == Clock::APB1_USART3) { APB1RSTR{}.USART3RST() = true; APB1RSTR{}.USART3RST() = false; return true; }
-            else if constexpr(P == Clock::APB1_I2C1)   { APB1RSTR{}.I2C1RST()   = true; APB1RSTR{}.I2C1RST()   = false; return true; }
-            else if constexpr(P == Clock::APB1_I2C2)   { APB1RSTR{}.I2C2RST()   = true; APB1RSTR{}.I2C2RST()   = false; return true; }
-            else if constexpr(P == Clock::APB1_CAN1)   { APB1RSTR{}.CAN1RST()   = true; APB1RSTR{}.CAN1RST()   = false; return true; }
-            else if constexpr(P == Clock::APB1_BKP)    { APB1RSTR{}.BKPRST()    = true; APB1RSTR{}.BKPRST()    = false; return true; }
-            else if constexpr(P == Clock::APB1_PWR)    { APB1RSTR{}.PWRRST()    = true; APB1RSTR{}.PWRRST()    = false; return true; }
-            else if constexpr(P == Clock::APB1_USB)    { APB1RSTR{}.USBRST()    = true; APB1RSTR{}.USBRST()    = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_TIM2)   { APB1RSTR{}.TIM2RST()   = true; APB1RSTR{}.TIM2RST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_TIM3)   { APB1RSTR{}.TIM3RST()   = true; APB1RSTR{}.TIM3RST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_TIM4)   { APB1RSTR{}.TIM4RST()   = true; APB1RSTR{}.TIM4RST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_WWDG)   { APB1RSTR{}.WWDGRST()   = true; APB1RSTR{}.WWDGRST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_SPI2)   { APB1RSTR{}.SPI2RST()   = true; APB1RSTR{}.SPI2RST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_USART2) { APB1RSTR{}.USART2RST() = true; APB1RSTR{}.USART2RST() = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_USART3) { APB1RSTR{}.USART3RST() = true; APB1RSTR{}.USART3RST() = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_I2C1)   { APB1RSTR{}.I2C1RST()   = true; APB1RSTR{}.I2C1RST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_I2C2)   { APB1RSTR{}.I2C2RST()   = true; APB1RSTR{}.I2C2RST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_CAN1)   { APB1RSTR{}.CAN1RST()   = true; APB1RSTR{}.CAN1RST()   = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_BKP)    { APB1RSTR{}.BKPRST()    = true; APB1RSTR{}.BKPRST()    = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_PWR)    { APB1RSTR{}.PWRRST()    = true; APB1RSTR{}.PWRRST()    = false; return true; }
+            else if constexpr(P == PeriphClock::APB1_USB)    { APB1RSTR{}.USBRST()    = true; APB1RSTR{}.USBRST()    = false; return true; }
             else { return false; }
         }
     };

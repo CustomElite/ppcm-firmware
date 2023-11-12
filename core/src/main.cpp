@@ -1,7 +1,9 @@
 #include "main.h"
+#include "gpio.hpp"
 #include "mcu.h"
 
 #include "printf.h"
+#include "sys_tick.hpp"
 #include "types.hpp"
 
 #include <etl/singleton.h>
@@ -21,7 +23,7 @@ int main()
     serial_t::create(USART1, 19200);
     auto& serial = serial_t::instance();
 
-    SysTickModule sysTick(1000u);
+    SYSTICK::Module sysTick(1000u);
     STATUS_LED led{IO::Output::PushPull, IO::State::High};
 
     printf_("\n");
@@ -30,19 +32,20 @@ int main()
     printf_("APB2 Clock: %ihz\n", (int)sysclk_t::APB2CLK());
     printf_("APB1 Clock: %ihz\n", (int)sysclk_t::APB1CLK());
 
+    uint8_t led_state = 0;
+
     while (1) 
     {
-        if ((sysTick.Tick() - timer) >= 2000u)
+        if ((sysTick.Tick() - timer) >= 250u)
         {
-            led = IO::State::Low;
-            sysTick.Wait(250u);
-            led = IO::State::High;
-            sysTick.Wait(250u);
-            led = IO::State::Low;
-            sysTick.Wait(250u);
-            led = IO::State::High;
-            sysTick.Wait(250u);
+            switch(led_state)
+            {
+                case 0: led = IO::State::Low; break;
+                case 1: led = IO::State::High; break;
+                default: led_state = 0;
+            }
             ++watch;
+            led_state = (led_state + 1) % 2;
             timer = sysTick.Tick();
         }
         while (serial.Size())

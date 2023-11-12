@@ -32,34 +32,33 @@ namespace Peripherals::IO
     template <>
     struct PortClockHelper<Port::A>
     {
-        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOA>;
+        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOA>;
     };
     template <>
     struct PortClockHelper<Port::B>
     {
-        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOB>;
+        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOB>;
     };
     template <>
     struct PortClockHelper<Port::C>
     {
-        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOC>;
+        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOC>;
     };
     template <>
     struct PortClockHelper<Port::D>
     {
-        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOD>;
+        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOD>;
     };
     template <>
     struct PortClockHelper<Port::E>
     {
-        using type = CLK::ClockWidget<CLK::Clock::APB2_GPIOE>;
+        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOE>;
     };
 
     template <Port P>
     class Kernal
     {
-        using clk_t = typename PortClockHelper<P>::type;
-
+    public:
         static void Construct() noexcept
         {
             clk_t::Power(CLK::State::On);
@@ -70,14 +69,16 @@ namespace Peripherals::IO
         }
 
     private:
-        constexpr auto GetClockWidget() noexcept
+        static constexpr auto GetClockWidget() noexcept
         {
-            if constexpr (P == Port::A) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOA>{}; }
-            if constexpr (P == Port::B) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOB>{}; }
-            if constexpr (P == Port::C) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOC>{}; }
-            if constexpr (P == Port::D) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOD>{}; }
-            if constexpr (P == Port::E) { return CLK::ClockWidget<CLK::Clock::APB2_GPIOE>{}; }
+            if constexpr (P == Port::A) { return CLK::PeriphClock::APB2_GPIOA; }
+            if constexpr (P == Port::B) { return CLK::PeriphClock::APB2_GPIOB; }
+            if constexpr (P == Port::C) { return CLK::PeriphClock::APB2_GPIOC; }
+            if constexpr (P == Port::D) { return CLK::PeriphClock::APB2_GPIOD; }
+            if constexpr (P == Port::E) { return CLK::PeriphClock::APB2_GPIOE; }
         }
+
+        using clk_t = CLK::ClockControl<GetClockWidget()>;
     };
 
     template <Port PORT, size_t PIN>

@@ -5,28 +5,42 @@
 #include "register.hpp"
 
 #include "stm32f1xx.h"
+#include "usart_registers.hpp"
 
-namespace Peripheral::USART
+namespace Peripherals::USART
 {
     namespace Settings
     {
+        enum class DataDirection : uint8_t
+        {
+            TX = 0b01,
+            RX = 0b10,
+            TX_RX = 0b11
+        };
         enum class DataWidth : uint8_t
         {
-            _8bits = 0,
-            _9bits
+            _8bits = 0b0,
+            _9bits = 0b1
         };
         enum class Parity : uint8_t
         {
-            None = 0,
-            Even,
-            Odd
+            None = 0b00,
+            Even = 0b01,
+            Odd = 0b11
         };
         enum class StopBits : uint8_t
         {
-            _1bit = 0,
-            _0_5bit,
-            _2bits,
-            _1_5bits
+            _1bit = 0b00,
+            _0_5bit = 0b01,
+            _2bits = 0b10,
+            _1_5bits = 0b11
+        };
+        enum class FlowControl : uint8_t
+        {
+            None = 0b0,
+            CTS = 0b01,
+            RTS = 0b10,
+            CTS_RTS = 0b11
         };
     }
 
@@ -41,6 +55,8 @@ namespace Peripheral::USART
     }
     namespace RegisterMap
     {
+        using namespace Settings;
+
         // Status register
         template <size_t MODULE, uint32_t ADDR>
         struct SR : public u32_reg_t<ADDR>
@@ -113,8 +129,8 @@ namespace Peripheral::USART
                 auto div_mant = (div_x100 / 100u);
                 auto div_frac = ((((div_x100 - (div_mant * 100u)) * 16u) + 50u) / 100u);
 
-                DIV_Mantissa() = (uint16_t)((div_mant << 4u) + (div_frac & 0xF0));
-                DIV_Fraction() = (uint16_t)(div_frac & 0x0F);
+                DIV_Mantissa() = (uint16_t)((div_mant << 4u) + (div_frac & 0b11110000));
+                DIV_Fraction() = (uint16_t)(div_frac & 0b1111);
             }
         };
 
@@ -163,6 +179,23 @@ namespace Peripheral::USART
 
             // Send break
             auto SBK() { return reg_t::template Bits<USART_CR1_SBK>(); }
+
+            void SetDataDirection(DataDirection const & input) noexcept
+            {
+                uint32_t tmp{ Common::Tools::EnumValue(input) };
+                TE() = (tmp & 0b01);
+                RE() = ((tmp >> 1u) & 0b01);
+            }
+            void SetDataWidth(DataWidth const & input) noexcept
+            {
+                M() = Common::Tools::EnumValue(input);
+            }
+            void SetParity(Parity const & input) noexcept
+            {
+                uint32_t tmp{ Common::Tools::EnumValue(input) };
+                PCE() = (tmp & 0b01);
+                PS() = (tmp >> 1u) & 0b01;
+            }
         };
 
         // Control register 2
@@ -198,6 +231,11 @@ namespace Peripheral::USART
 
             // Address of USART node
             auto ADD() { return reg_t::template Bits<USART_CR2_ADD>(); }
+
+            void SetStopBits(StopBits const & input) noexcept
+            {
+                STOP() = Common::Tools::EnumValue(input);
+            }
         };
 
         // Control register 3
@@ -239,6 +277,13 @@ namespace Peripheral::USART
 
             // Error interrupt mode
             auto EIE() { return reg_t::template Bits<USART_CR3_EIE>(); }
+
+            void SetFlowControl(FlowControl const & input) noexcept
+            {
+                uint32_t tmp{ Common::Tools::EnumValue(input) };
+                CTSE() = (tmp & 0b01);
+                RTSE() = ((tmp >> 1u) & 0b01);
+            }
         };
 
         // Guard time and prescaler register

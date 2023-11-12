@@ -227,6 +227,11 @@ namespace Peripherals::IO
                 if constexpr (PIN == 0) { return reg_t::template Bits<GPIO_ODR_ODR0>(); }
             }
 
+            ODR & operator = (bool const rhs) noexcept
+            {
+                OD() = rhs;
+            }
+
             void SetPullResistor(PullResistor input) noexcept
             {
                 OD() = Tools::EnumValue(input);

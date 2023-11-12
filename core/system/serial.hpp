@@ -33,7 +33,7 @@ namespace System
             m_rxBuffer{},
             //m_isr{ delegate_t::template create<Serial, &Serial::interrupt_handler>(*this) }
             m_isr{ 
-                [&](){
+                [](){
                     if (LL_USART_IsActiveFlag_RXNE(Get().m_usart))
                     Get().m_rxBuffer.push(LL_USART_ReceiveData8(Get().m_usart));
                 } 
@@ -66,8 +66,8 @@ namespace System
 
     private:
         using buffer_t = etl::queue_spsc_atomic<char, 64u, etl::memory_model::MEMORY_MODEL_SMALL>;
-        using interrupt_t = System::Interrupt<Serial, InterruptSource::eUSART1, 5u>;
-        using callback_t = Common::StaticLambda<typename T>
+        using interrupt_t = ISR::Interrupt<Serial, ISR::InterruptSource::eUSART1, 5u>;
+        //using callback_t = Common::StaticLambda<typename T>
 
         using TX_Pin = IO::Module<IO::Port::A, 9>;
         using RX_Pin = IO::Module<IO::Port::A, 10>;
@@ -85,7 +85,7 @@ namespace System
         void Configure(size_t baud_rate) const noexcept
         {
             /* Peripheral clock enable */
-            CLK::ClockWidget<CLK::Clock::APB2_USART1>::Power();
+            CLK::ClockControl<CLK::PeriphClock::APB2_USART1>::Power();
 
             /* UART Configuration */
             LL_USART_SetTransferDirection(USART1, LL_USART_DIRECTION_TX_RX);

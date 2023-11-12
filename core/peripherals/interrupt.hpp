@@ -7,7 +7,7 @@
 #include "stm32f1xx.h"
 #include <new>
 
-namespace System 
+namespace Peripherals::ISR
 {
     enum class InterruptSource
     {

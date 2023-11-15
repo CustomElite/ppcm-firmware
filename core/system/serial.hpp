@@ -2,13 +2,11 @@
 
 #include "gpio.hpp"
 #include "interrupt.hpp"
-#include "mcu_config.hpp"
-#include "rcc.hpp"
-#include "pin_defs.hpp"
 #include "usart.hpp"
 
+#include "pin_defs.hpp"
+
 #include <optional>
-#include <etl/singleton.h>
 
 namespace System
 {

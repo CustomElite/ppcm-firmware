@@ -1,11 +1,11 @@
 #pragma once
 
-#include "macros.h"
-#include "rcc.hpp"
-#include "run_once.hpp"
-#include "tools.hpp"
-
 #include "gpio_registers.hpp"
+
+#include "rcc.hpp"
+
+#include "macros.h"
+#include "run_once.hpp"
 
 namespace Peripherals::IO 
 {

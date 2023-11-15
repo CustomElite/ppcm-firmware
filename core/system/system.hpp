@@ -1,14 +1,11 @@
 #pragma once
 
 #include "gpio.hpp"
-#include "rcc.hpp"
 
 #include "serial.hpp"
-#include "types.hpp"
 #include "sys_tick.hpp"
-#include "constants.hpp"
 #include "pin_defs.hpp"
-
+#include "constants.hpp"
 
 #include <cstdint>
 

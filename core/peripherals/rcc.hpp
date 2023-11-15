@@ -1,11 +1,11 @@
 #pragma once
 
-#include "constants.hpp"
 #include "rcc_register.hpp"
 
 #include "mcu_config.hpp"
 
 #include "tools.hpp"
+#include "constants.hpp"
 
 namespace Peripherals::CLK
 {

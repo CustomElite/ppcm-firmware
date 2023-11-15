@@ -1,20 +1,15 @@
 #pragma once
 
-#include "gpio.hpp"
-#include "interrupt.hpp"
-
-#include "macros.h"
-#include "run_once.hpp"
-#include "static_lambda.hpp"
-#include "types.hpp"
-#include "tools.hpp"
-#include "containers/fifo.hpp"
-
 #include "usart_registers.hpp"
 
-#include <cstdint>
+#include "interrupt.hpp"
 
-#include "stm32f1xx_ll_usart.h"
+#include "types.hpp"
+#include "run_once.hpp"
+#include "static_lambda.hpp"
+#include "containers/fifo.hpp"
+
+#include <cstdint>
 
 namespace Peripherals::USART 
 {

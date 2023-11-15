@@ -44,7 +44,7 @@ namespace Peripherals::DMA
         };
     }
 
-    namespace RegisterMap
+    namespace MemoryMap
     {
         using namespace Settings;
 
@@ -104,34 +104,34 @@ namespace Peripherals::DMA
             }
 
         private:
-            auto TEIF7() { return reg_t::template Bits<DMA_ISR_TEIF7>(); }
-            auto HTIF7() { return reg_t::template Bits<DMA_ISR_HTIF7>(); }
-            auto TCIF7() { return reg_t::template Bits<DMA_ISR_TCIF7>(); }
-            auto GIF7()  { return reg_t::template Bits<DMA_ISR_GIF7>(); }
-            auto TEIF6() { return reg_t::template Bits<DMA_ISR_TEIF6>(); }
-            auto HTIF6() { return reg_t::template Bits<DMA_ISR_HTIF6>(); }
-            auto TCIF6() { return reg_t::template Bits<DMA_ISR_TCIF6>(); }
-            auto GIF6()  { return reg_t::template Bits<DMA_ISR_GIF6>(); }
-            auto TEIF5() { return reg_t::template Bits<DMA_ISR_TEIF5>(); }
-            auto HTIF5() { return reg_t::template Bits<DMA_ISR_HTIF5>(); }
-            auto TCIF5() { return reg_t::template Bits<DMA_ISR_TCIF5>(); }
-            auto GIF5()  { return reg_t::template Bits<DMA_ISR_GIF5>(); }
-            auto TEIF4() { return reg_t::template Bits<DMA_ISR_TEIF4>(); }
-            auto HTIF4() { return reg_t::template Bits<DMA_ISR_HTIF4>(); }
-            auto TCIF4() { return reg_t::template Bits<DMA_ISR_TCIF4>(); }
-            auto GIF4()  { return reg_t::template Bits<DMA_ISR_GIF4>(); }
-            auto TEIF3() { return reg_t::template Bits<DMA_ISR_TEIF3>(); }
-            auto HTIF3() { return reg_t::template Bits<DMA_ISR_HTIF3>(); }
-            auto TCIF3() { return reg_t::template Bits<DMA_ISR_TCIF3>(); }
-            auto GIF3()  { return reg_t::template Bits<DMA_ISR_GIF3>(); }
-            auto TEIF2() { return reg_t::template Bits<DMA_ISR_TEIF2>(); }
-            auto HTIF2() { return reg_t::template Bits<DMA_ISR_HTIF2>(); }
-            auto TCIF2() { return reg_t::template Bits<DMA_ISR_TCIF2>(); }
-            auto GIF2()  { return reg_t::template Bits<DMA_ISR_GIF2>(); }
-            auto TEIF1() { return reg_t::template Bits<DMA_ISR_TEIF1>(); }
-            auto HTIF1() { return reg_t::template Bits<DMA_ISR_HTIF1>(); }
-            auto TCIF1() { return reg_t::template Bits<DMA_ISR_TCIF1>(); }
-            auto GIF1()  { return reg_t::template Bits<DMA_ISR_GIF1>(); }
+            auto TEIF7() { return reg_t::template Get<DMA_ISR_TEIF7>(); }
+            auto HTIF7() { return reg_t::template Get<DMA_ISR_HTIF7>(); }
+            auto TCIF7() { return reg_t::template Get<DMA_ISR_TCIF7>(); }
+            auto GIF7()  { return reg_t::template Get<DMA_ISR_GIF7>(); }
+            auto TEIF6() { return reg_t::template Get<DMA_ISR_TEIF6>(); }
+            auto HTIF6() { return reg_t::template Get<DMA_ISR_HTIF6>(); }
+            auto TCIF6() { return reg_t::template Get<DMA_ISR_TCIF6>(); }
+            auto GIF6()  { return reg_t::template Get<DMA_ISR_GIF6>(); }
+            auto TEIF5() { return reg_t::template Get<DMA_ISR_TEIF5>(); }
+            auto HTIF5() { return reg_t::template Get<DMA_ISR_HTIF5>(); }
+            auto TCIF5() { return reg_t::template Get<DMA_ISR_TCIF5>(); }
+            auto GIF5()  { return reg_t::template Get<DMA_ISR_GIF5>(); }
+            auto TEIF4() { return reg_t::template Get<DMA_ISR_TEIF4>(); }
+            auto HTIF4() { return reg_t::template Get<DMA_ISR_HTIF4>(); }
+            auto TCIF4() { return reg_t::template Get<DMA_ISR_TCIF4>(); }
+            auto GIF4()  { return reg_t::template Get<DMA_ISR_GIF4>(); }
+            auto TEIF3() { return reg_t::template Get<DMA_ISR_TEIF3>(); }
+            auto HTIF3() { return reg_t::template Get<DMA_ISR_HTIF3>(); }
+            auto TCIF3() { return reg_t::template Get<DMA_ISR_TCIF3>(); }
+            auto GIF3()  { return reg_t::template Get<DMA_ISR_GIF3>(); }
+            auto TEIF2() { return reg_t::template Get<DMA_ISR_TEIF2>(); }
+            auto HTIF2() { return reg_t::template Get<DMA_ISR_HTIF2>(); }
+            auto TCIF2() { return reg_t::template Get<DMA_ISR_TCIF2>(); }
+            auto GIF2()  { return reg_t::template Get<DMA_ISR_GIF2>(); }
+            auto TEIF1() { return reg_t::template Get<DMA_ISR_TEIF1>(); }
+            auto HTIF1() { return reg_t::template Get<DMA_ISR_HTIF1>(); }
+            auto TCIF1() { return reg_t::template Get<DMA_ISR_TCIF1>(); }
+            auto GIF1()  { return reg_t::template Get<DMA_ISR_GIF1>(); }
         };
 
         // Interrupt flag clear register
@@ -190,34 +190,34 @@ namespace Peripherals::DMA
             }
 
         private:
-            auto CTEIF7() { return reg_t::template Bits<DMA_IFCR_CTEIF7>(); }
-            auto CHTIF7() { return reg_t::template Bits<DMA_IFCR_CHTIF7>(); }
-            auto CTCIF7() { return reg_t::template Bits<DMA_IFCR_CTCIF7>(); }
-            auto CGIF7()  { return reg_t::template Bits<DMA_IFCR_CGIF7>(); }
-            auto CTEIF6() { return reg_t::template Bits<DMA_IFCR_CTEIF6>(); }
-            auto CHTIF6() { return reg_t::template Bits<DMA_IFCR_CHTIF6>(); }
-            auto CTCIF6() { return reg_t::template Bits<DMA_IFCR_CTCIF6>(); }
-            auto CGIF6()  { return reg_t::template Bits<DMA_IFCR_CGIF6>(); }
-            auto CTEIF5() { return reg_t::template Bits<DMA_IFCR_CTEIF5>(); }
-            auto CHTIF5() { return reg_t::template Bits<DMA_IFCR_CHTIF5>(); }
-            auto CTCIF5() { return reg_t::template Bits<DMA_IFCR_CTCIF5>(); }
-            auto CGIF5()  { return reg_t::template Bits<DMA_IFCR_CGIF5>(); }
-            auto CTEIF4() { return reg_t::template Bits<DMA_IFCR_CTEIF4>(); }
-            auto CHTIF4() { return reg_t::template Bits<DMA_IFCR_CHTIF4>(); }
-            auto CTCIF4() { return reg_t::template Bits<DMA_IFCR_CTCIF4>(); }
-            auto CGIF4()  { return reg_t::template Bits<DMA_IFCR_CGIF4>(); }
-            auto CTEIF3() { return reg_t::template Bits<DMA_IFCR_CTEIF3>(); }
-            auto CHTIF3() { return reg_t::template Bits<DMA_IFCR_CHTIF3>(); }
-            auto CTCIF3() { return reg_t::template Bits<DMA_IFCR_CTCIF3>(); }
-            auto CGIF3()  { return reg_t::template Bits<DMA_IFCR_CGIF3>(); }
-            auto CTEIF2() { return reg_t::template Bits<DMA_IFCR_CTEIF2>(); }
-            auto CHTIF2() { return reg_t::template Bits<DMA_IFCR_CHTIF2>(); }
-            auto CTCIF2() { return reg_t::template Bits<DMA_IFCR_CTCIF2>(); }
-            auto CGIF2()  { return reg_t::template Bits<DMA_IFCR_CGIF2>(); }
-            auto CTEIF1() { return reg_t::template Bits<DMA_IFCR_CTEIF1>(); }
-            auto CHTIF1() { return reg_t::template Bits<DMA_IFCR_CHTIF1>(); }
-            auto CTCIF1() { return reg_t::template Bits<DMA_IFCR_CTCIF1>(); }
-            auto CGIF1()  { return reg_t::template Bits<DMA_IFCR_CGIF1>(); }
+            auto CTEIF7() { return reg_t::template Get<DMA_IFCR_CTEIF7>(); }
+            auto CHTIF7() { return reg_t::template Get<DMA_IFCR_CHTIF7>(); }
+            auto CTCIF7() { return reg_t::template Get<DMA_IFCR_CTCIF7>(); }
+            auto CGIF7()  { return reg_t::template Get<DMA_IFCR_CGIF7>(); }
+            auto CTEIF6() { return reg_t::template Get<DMA_IFCR_CTEIF6>(); }
+            auto CHTIF6() { return reg_t::template Get<DMA_IFCR_CHTIF6>(); }
+            auto CTCIF6() { return reg_t::template Get<DMA_IFCR_CTCIF6>(); }
+            auto CGIF6()  { return reg_t::template Get<DMA_IFCR_CGIF6>(); }
+            auto CTEIF5() { return reg_t::template Get<DMA_IFCR_CTEIF5>(); }
+            auto CHTIF5() { return reg_t::template Get<DMA_IFCR_CHTIF5>(); }
+            auto CTCIF5() { return reg_t::template Get<DMA_IFCR_CTCIF5>(); }
+            auto CGIF5()  { return reg_t::template Get<DMA_IFCR_CGIF5>(); }
+            auto CTEIF4() { return reg_t::template Get<DMA_IFCR_CTEIF4>(); }
+            auto CHTIF4() { return reg_t::template Get<DMA_IFCR_CHTIF4>(); }
+            auto CTCIF4() { return reg_t::template Get<DMA_IFCR_CTCIF4>(); }
+            auto CGIF4()  { return reg_t::template Get<DMA_IFCR_CGIF4>(); }
+            auto CTEIF3() { return reg_t::template Get<DMA_IFCR_CTEIF3>(); }
+            auto CHTIF3() { return reg_t::template Get<DMA_IFCR_CHTIF3>(); }
+            auto CTCIF3() { return reg_t::template Get<DMA_IFCR_CTCIF3>(); }
+            auto CGIF3()  { return reg_t::template Get<DMA_IFCR_CGIF3>(); }
+            auto CTEIF2() { return reg_t::template Get<DMA_IFCR_CTEIF2>(); }
+            auto CHTIF2() { return reg_t::template Get<DMA_IFCR_CHTIF2>(); }
+            auto CTCIF2() { return reg_t::template Get<DMA_IFCR_CTCIF2>(); }
+            auto CGIF2()  { return reg_t::template Get<DMA_IFCR_CGIF2>(); }
+            auto CTEIF1() { return reg_t::template Get<DMA_IFCR_CTEIF1>(); }
+            auto CHTIF1() { return reg_t::template Get<DMA_IFCR_CHTIF1>(); }
+            auto CTCIF1() { return reg_t::template Get<DMA_IFCR_CTCIF1>(); }
+            auto CGIF1()  { return reg_t::template Get<DMA_IFCR_CGIF1>(); }
         };
 
         // Configuration register
@@ -228,40 +228,40 @@ namespace Peripherals::DMA
             using reg_t::reg_t;
 
             // Memory to memory mode
-            auto MEM2MEM() { return reg_t::template Bits<DMA_CCR_MEM2MEM>(); }
+            auto MEM2MEM() { return reg_t::template Get<DMA_CCR_MEM2MEM>(); }
 
             // Priority level
-            auto PL() { return reg_t::template Bits<DMA_CCR_PL>(); }
+            auto PL() { return reg_t::template Get<DMA_CCR_PL>(); }
 
             // Memory size
-            auto MSIZE() { return reg_t::template Bits<DMA_CCR_MSIZE>(); }
+            auto MSIZE() { return reg_t::template Get<DMA_CCR_MSIZE>(); }
 
             // Peripheral size
-            auto PSIZE() { return reg_t::template Bits<DMA_CCR_PSIZE>(); }
+            auto PSIZE() { return reg_t::template Get<DMA_CCR_PSIZE>(); }
 
             // Memory increment mode
-            auto MINC() { return reg_t::template Bits<DMA_CCR_MINC>(); }
+            auto MINC() { return reg_t::template Get<DMA_CCR_MINC>(); }
 
             // Peripheral increment mode
-            auto PINC() { return reg_t::template Bits<DMA_CCR_PINC>(); }
+            auto PINC() { return reg_t::template Get<DMA_CCR_PINC>(); }
 
             // Circular mode
-            auto CIRC() { return reg_t::template Bits<DMA_CCR_CIRC>(); }
+            auto CIRC() { return reg_t::template Get<DMA_CCR_CIRC>(); }
 
             // Data transfer direction
-            auto DIR() { return reg_t::template Bits<DMA_CCR_DIR>(); }
+            auto DIR() { return reg_t::template Get<DMA_CCR_DIR>(); }
 
             // Tranfer error interrupt enable
-            auto TEIE() { return reg_t::template Bits<DMA_CCR_TEIE>(); }
+            auto TEIE() { return reg_t::template Get<DMA_CCR_TEIE>(); }
 
             // Half transfer interrupt enable
-            auto HTIE() { return reg_t::template Bits<DMA_CCR_HTIE>(); }
+            auto HTIE() { return reg_t::template Get<DMA_CCR_HTIE>(); }
 
             // Transfer complete interrupt enable
-            auto TCIE() { return reg_t::template Bits<DMA_CCR_TCIE>(); }
+            auto TCIE() { return reg_t::template Get<DMA_CCR_TCIE>(); }
 
             // Channel enable
-            auto EN() { return reg_t::template Bits<DMA_CCR_EN>(); }
+            auto EN() { return reg_t::template Get<DMA_CCR_EN>(); }
         };
 
         // Number of data register
@@ -274,7 +274,7 @@ namespace Peripherals::DMA
             static constexpr uint32_t Maximum = DMA_CNDTR_NDT + 1u;
 
             // Number of data to transfer
-            auto NDT() { return reg_t::template Bits<DMA_CNDTR_NDT>(); }
+            auto NDT() { return reg_t::template Get<DMA_CNDTR_NDT>(); }
         };
 
         // Peripheral address register
@@ -285,7 +285,7 @@ namespace Peripherals::DMA
             using reg_t::reg_t;
 
             // Peripheral address
-            auto PA() { return reg_t::template Bits<DMA_CPAR_PA>(); }
+            auto PA() { return reg_t::template Get<DMA_CPAR_PA>(); }
         };
 
         // Memory address register
@@ -296,7 +296,7 @@ namespace Peripherals::DMA
             using reg_t::reg_t;
 
             // Memory address
-            auto MA() { return reg_t::template Bits<DMA_CMAR_MA>(); }
+            auto MA() { return reg_t::template Get<DMA_CMAR_MA>(); }
         };
 
         template <size_t CH>

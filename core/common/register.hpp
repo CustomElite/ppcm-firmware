@@ -2,12 +2,13 @@
 
 #include "macros.h"
 
-#include <etl/binary.h>
+#include <cstdint>
+#include <cstddef>
 
 namespace Common 
 {
     template <typename T, uint32_t ADDR, T BITMSK>
-    class Bitfield
+    class Bitset
     {
     public:
         ALWAYS_INLINE void Clear() noexcept
@@ -22,43 +23,56 @@ namespace Common
         {
             (*s_addr) ^= apply_mask(input);
         }
-        ALWAYS_INLINE T Get() const noexcept
+        ALWAYS_INLINE T Read() const noexcept
         {
             return (((*s_addr) & s_mask) >> s_pos);
         }
-        ALWAYS_INLINE Bitfield& operator = (T input) noexcept
+        ALWAYS_INLINE Bitset & operator = (T input) noexcept
         {
             Set(input);
             return *this;
         }
         ALWAYS_INLINE operator T() const noexcept
         {
-            return Get();
+            return Read();
         }
-        ALWAYS_INLINE Bitfield& operator |= (T input) noexcept
+        ALWAYS_INLINE Bitset & operator |= (T input) noexcept
         {
             (*s_addr) |= apply_mask(input);
             return *this;
         }
-        ALWAYS_INLINE Bitfield& operator &= (T input) noexcept
+        ALWAYS_INLINE Bitset & operator &= (T input) noexcept
         {
             (*s_addr) &= (apply_mask(input) | s_nMask);
             return *this;
         }
-    private:
-        using ptr_t = T volatile * const;
-
-        static constexpr T s_mask = BITMSK;
-        static constexpr T s_nMask = (~s_mask);
-        static constexpr T s_pos = etl::count_trailing_zeros(BITMSK);
-
-        inline static ptr_t s_addr = reinterpret_cast<ptr_t>(ADDR);
 
     private:
+        ALWAYS_INLINE static constexpr T get_position() noexcept
+        {
+            T start{ 0 };
+            T mask{ BITMSK };
+
+            while((mask & 1) == 0)
+            {
+                ++start;
+                mask >>= 1;
+            }
+
+            return start;
+        }
         ALWAYS_INLINE static auto apply_mask(T input) noexcept
         {
             return ((input << s_pos) & s_mask);
         }
+    
+        using ptr_t = T volatile * const;
+
+        static constexpr T s_mask = BITMSK;
+        static constexpr T s_nMask = (~s_mask);
+        static constexpr T s_pos = get_position();
+
+        inline static ptr_t s_addr = reinterpret_cast<ptr_t>(ADDR);
     };
 
     template <typename T, uint32_t ADDR>
@@ -70,20 +84,20 @@ namespace Common
 
         inline static ptr_t s_addr = reinterpret_cast<ptr_t>(ADDR);
 
-        ALWAYS_INLINE void Set(T input) noexcept
+        ALWAYS_INLINE void Write(T input) noexcept
         {
             (*s_addr) = input;
         }
-        ALWAYS_INLINE T Get() const noexcept
+        ALWAYS_INLINE T Read() const noexcept
         {
             return *s_addr;
         }
-        ALWAYS_INLINE RawRegister& Access() noexcept
+        ALWAYS_INLINE RawRegister & Access() noexcept
         {
             return *this;
         }
         template <T MSK>
-        ALWAYS_INLINE Bitfield<T, ADDR, MSK> Bits() const noexcept
+        ALWAYS_INLINE Bitset<T, ADDR, MSK> Get() const noexcept
         {
             return {};
         }

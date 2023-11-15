@@ -27,37 +27,20 @@ namespace Peripherals::IO
     };
 
     template <Port P>
-    struct PortClockHelper{};
+    class PowerKernal
+    {
+    private:
+        static constexpr auto GetClockModule() noexcept
+        {
+            if constexpr (P == Port::A) { return CLK::Module::APB2_GPIOA; }
+            if constexpr (P == Port::B) { return CLK::Module::APB2_GPIOB; }
+            if constexpr (P == Port::C) { return CLK::Module::APB2_GPIOC; }
+            if constexpr (P == Port::D) { return CLK::Module::APB2_GPIOD; }
+            if constexpr (P == Port::E) { return CLK::Module::APB2_GPIOE; }
+        }
 
-    template <>
-    struct PortClockHelper<Port::A>
-    {
-        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOA>;
-    };
-    template <>
-    struct PortClockHelper<Port::B>
-    {
-        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOB>;
-    };
-    template <>
-    struct PortClockHelper<Port::C>
-    {
-        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOC>;
-    };
-    template <>
-    struct PortClockHelper<Port::D>
-    {
-        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOD>;
-    };
-    template <>
-    struct PortClockHelper<Port::E>
-    {
-        using type = CLK::ClockControl<CLK::PeriphClock::APB2_GPIOE>;
-    };
+        using clk_t = CLK::Control<GetClockModule()>;
 
-    template <Port P>
-    class Kernal
-    {
     public:
         static void Construct() noexcept
         {
@@ -67,38 +50,26 @@ namespace Peripherals::IO
         {
             if (!clk_t::Reset()) { clk_t::Power(CLK::State::Off); }
         }
-
-    private:
-        static constexpr auto GetClockWidget() noexcept
-        {
-            if constexpr (P == Port::A) { return CLK::PeriphClock::APB2_GPIOA; }
-            if constexpr (P == Port::B) { return CLK::PeriphClock::APB2_GPIOB; }
-            if constexpr (P == Port::C) { return CLK::PeriphClock::APB2_GPIOC; }
-            if constexpr (P == Port::D) { return CLK::PeriphClock::APB2_GPIOD; }
-            if constexpr (P == Port::E) { return CLK::PeriphClock::APB2_GPIOE; }
-        }
-
-        using clk_t = CLK::ClockControl<GetClockWidget()>;
     };
 
     template <Port PORT, size_t PIN>
-    class Module
+    class Interface
     {
         static_assert((PIN >= 0) && (PIN <= 15u), "Pin number does not exist. Only pins 0-15 are valid.");
 
     public:
         template <typename... Args>
-        ALWAYS_INLINE Module(Args... args) noexcept
+        ALWAYS_INLINE Interface(Args... args) noexcept
         {
             Configure(args ...);
         }
         template <typename T>
-        ALWAYS_INLINE Module& operator = (T input) noexcept
+        ALWAYS_INLINE Interface & operator = (T input) noexcept
         {
             Set(input);
             return *this;
         }
-        ALWAYS_INLINE Module& operator = (bool input) noexcept
+        ALWAYS_INLINE Interface & operator = (bool input) noexcept
         {
             Set((State)input);
             return *this;
@@ -122,7 +93,7 @@ namespace Peripherals::IO
         }
 
     private:
-        using REGS = RegisterMap::Registers<Tools::EnumValue(PORT), PIN>;
+        using REGS = MemoryMap::Registers<Tools::EnumValue(PORT), PIN>;
         using CRx = typename REGS::CRx_t;
         using IDR = typename REGS::IDR_t;
         using ODR = typename REGS::ODR_t;
@@ -130,8 +101,7 @@ namespace Peripherals::IO
         using BRR = typename REGS::BRR_t;
         using LCKR = typename REGS::LCKR_t;
 
-        Common::RunOnce<Kernal<PORT>> m_clk{};
-        //constexpr static uint32_t clk_msk = (1u << (Common::Tools::EnumValue(PORT) + 2u));
+        Common::RunOnce<PowerKernal<PORT>> m_kernal{};
 
         ALWAYS_INLINE static void Set(Input input) noexcept
         {

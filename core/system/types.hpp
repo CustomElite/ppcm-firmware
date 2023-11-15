@@ -1,19 +1,19 @@
 #pragma once
 
-#include "gpio.hpp"
-#include "gpio_registers.hpp"
 #include "rcc.hpp"
-#include "serial.hpp"
 
-namespace System
+namespace System 
 {
-    using namespace Peripherals;
+    struct BusProperties
+    {
+        static constexpr auto CoreClockSrc = ::Peripherals::CLK::SystemClockSource::HSE;
+        static constexpr auto AHB_Prescale = ::Peripherals::CLK::HCLK_Prescaler::SYSCLK_DIV1;
+        static constexpr auto APB2_Prescale = ::Peripherals::CLK::PCLK_Prescaler::HCLK_DIV4;
+        static constexpr auto APB1_Prescale = ::Peripherals::CLK::PCLK_Prescaler::HCLK_DIV4;
+        static constexpr auto PLL_ClockSrc = ::Peripherals::CLK::PLL_ClockSource::HSE;
+        static constexpr auto PLL_Multi = ::Peripherals::CLK::PLL_Multiplier::X2;
+    };
 
-    using serial_t = etl::singleton<System::Serial>;
-    using sysclk_t = CLK::SystemClock<CLK::SystemClockSource::HSE, CLK::HCLK_Prescaler::SYSCLK_DIV1, CLK::PCLK_Prescaler::HCLK_DIV2, CLK::PCLK_Prescaler::HCLK_DIV2>;
+    using SystemBus_t = ::Peripherals::CLK::SystemBus<BusProperties>;
 
-    using ADC_CS = IO::Module<IO::Port::B, 12>;
-    using ADC_BUSY = IO::Module<IO::Port::B, 11>;
-    using DAC_SYNC = IO::Module<IO::Port::B, 10>;
-    using STATUS_LED = IO::Module<IO::Port::C, 13>;
 }

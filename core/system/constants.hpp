@@ -6,10 +6,17 @@
 
 namespace System 
 {
-    constexpr float operator ""_v(long double v) noexcept { return static_cast<float>(v); }
-    constexpr float operator ""_mv(long double mv) noexcept { return (static_cast<float>(mv) / 1000.0f); }
-    constexpr float operator ""_a(long double a) noexcept { return static_cast<float>(a); }
-    constexpr float operator ""_ma(long double ma) noexcept { return (static_cast<float>(ma) / 1000.0f); }
+    constexpr float operator ""_v(long double volts) noexcept { return static_cast<float>(volts); }
+    constexpr float operator ""_mv(long double millivolts) noexcept { return static_cast<float>(millivolts / 1000.0f); }
+    constexpr float operator ""_a(long double amp) noexcept { return static_cast<float>(amp); }
+    constexpr float operator ""_ma(long double milliamps) noexcept { return static_cast<float>(milliamps / 1000.0f); }
+
+    constexpr uint32_t operator ""_sec(long double seconds) noexcept { return static_cast<uint32_t>(seconds * 1000u); }
+    constexpr uint32_t operator ""_sec(unsigned long long seconds) noexcept { return static_cast<uint32_t>(seconds * 1000u); }
+    constexpr uint32_t operator ""_msec(long double milliseconds) noexcept { return static_cast<uint32_t>(milliseconds); }
+    constexpr uint32_t operator ""_msec(unsigned long long milliseconds) noexcept { return static_cast<uint32_t>(milliseconds); }
+    constexpr uint32_t operator ""_usec(long double microseconds) noexcept { return static_cast<uint32_t>(microseconds / 1000u); }
+    constexpr uint32_t operator ""_usec(unsigned long long microseconds) noexcept { return static_cast<uint32_t>(microseconds / 1000u); }
 
     constexpr uint32_t operator ""_u32(unsigned long long rhs) noexcept { return static_cast<uint32_t>(rhs); }
 

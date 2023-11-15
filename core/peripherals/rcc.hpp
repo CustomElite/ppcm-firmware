@@ -1,13 +1,11 @@
 #pragma once
 
 #include "constants.hpp"
-#include "rcc.hpp"
 #include "rcc_register.hpp"
 
 #include "mcu_config.hpp"
 
 #include "tools.hpp"
-#include <etl/functional.h>
 
 namespace Peripherals::CLK
 {
@@ -18,7 +16,7 @@ namespace Peripherals::CLK
         Off = false,
         On = true
     };
-    enum class PeriphClock : uint8_t
+    enum class Module : uint8_t
     {
         APB1_TIM2 = 0,
         APB1_TIM3,
@@ -54,174 +52,188 @@ namespace Peripherals::CLK
         AHB_SRAM
     };
 
-    template <PeriphClock P>
-    struct ClockControl
+    template <Module M>
+    struct Control
     {
         static void Power(const State input = State::On) noexcept
         {
             using namespace Common::Tools;
-            using namespace RegisterMap;
+            using namespace MemoryMap;
             
-            if constexpr(P == PeriphClock::APB2_AFIO)   { APB2ENR{}.AFIOEN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_GPIOA)  { APB2ENR{}.IOPAEN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_GPIOB)  { APB2ENR{}.IOPBEN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_GPIOC)  { APB2ENR{}.IOPCEN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_GPIOD)  { APB2ENR{}.IOPDEN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_GPIOE)  { APB2ENR{}.IOPEEN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_ADC1)   { APB2ENR{}.ADC1EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_ADC2)   { APB2ENR{}.ADC2EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_TIM1)   { APB2ENR{}.TIM1EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_SPI1)   { APB2ENR{}.SPI1EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB2_USART1) { APB2ENR{}.USART1EN() = EnumValue(input); }
+            if constexpr(M == Module::APB2_AFIO)   { APB2ENR{}.AFIOEN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_GPIOA)  { APB2ENR{}.IOPAEN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_GPIOB)  { APB2ENR{}.IOPBEN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_GPIOC)  { APB2ENR{}.IOPCEN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_GPIOD)  { APB2ENR{}.IOPDEN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_GPIOE)  { APB2ENR{}.IOPEEN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_ADC1)   { APB2ENR{}.ADC1EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_ADC2)   { APB2ENR{}.ADC2EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_TIM1)   { APB2ENR{}.TIM1EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_SPI1)   { APB2ENR{}.SPI1EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB2_USART1) { APB2ENR{}.USART1EN() = EnumValue(input); }
             
-            if constexpr(P == PeriphClock::APB1_TIM2)   { APB1ENR{}.TIM2EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_TIM3)   { APB1ENR{}.TIM3EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_TIM4)   { APB1ENR{}.TIM4EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_WWDG)   { APB1ENR{}.WWDGEN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_SPI2)   { APB1ENR{}.SPI2EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_USART2) { APB1ENR{}.USART2EN() = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_USART3) { APB1ENR{}.USART3EN() = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_I2C1)   { APB1ENR{}.I2C1EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_I2C2)   { APB1ENR{}.I2C2EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_CAN1)   { APB1ENR{}.CAN1EN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_BKP)    { APB1ENR{}.BKPEN()    = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_PWR)    { APB1ENR{}.PWREN()    = EnumValue(input); }
-            if constexpr(P == PeriphClock::APB1_USB)    { APB1ENR{}.USBEN()    = EnumValue(input); }
+            if constexpr(M == Module::APB1_TIM2)   { APB1ENR{}.TIM2EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB1_TIM3)   { APB1ENR{}.TIM3EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB1_TIM4)   { APB1ENR{}.TIM4EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB1_WWDG)   { APB1ENR{}.WWDGEN()   = EnumValue(input); }
+            if constexpr(M == Module::APB1_SPI2)   { APB1ENR{}.SPI2EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB1_USART2) { APB1ENR{}.USART2EN() = EnumValue(input); }
+            if constexpr(M == Module::APB1_USART3) { APB1ENR{}.USART3EN() = EnumValue(input); }
+            if constexpr(M == Module::APB1_I2C1)   { APB1ENR{}.I2C1EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB1_I2C2)   { APB1ENR{}.I2C2EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB1_CAN1)   { APB1ENR{}.CAN1EN()   = EnumValue(input); }
+            if constexpr(M == Module::APB1_BKP)    { APB1ENR{}.BKPEN()    = EnumValue(input); }
+            if constexpr(M == Module::APB1_PWR)    { APB1ENR{}.PWREN()    = EnumValue(input); }
+            if constexpr(M == Module::APB1_USB)    { APB1ENR{}.USBEN()    = EnumValue(input); }
 
-            if constexpr(P == PeriphClock::AHB_DMA1)   { AHBENR{}.DMA1EN()    = EnumValue(input); }
-            if constexpr(P == PeriphClock::AHB_CRC)    { AHBENR{}.CRCEN()     = EnumValue(input); }
-            if constexpr(P == PeriphClock::AHB_FLASH)  { AHBENR{}.FLITFEN()   = EnumValue(input); }
-            if constexpr(P == PeriphClock::AHB_SRAM)   { AHBENR{}.SRAMEN()    = EnumValue(input); }
+            if constexpr(M == Module::AHB_DMA1)   { AHBENR{}.DMA1EN()    = EnumValue(input); }
+            if constexpr(M == Module::AHB_CRC)    { AHBENR{}.CRCEN()     = EnumValue(input); }
+            if constexpr(M == Module::AHB_FLASH)  { AHBENR{}.FLITFEN()   = EnumValue(input); }
+            if constexpr(M == Module::AHB_SRAM)   { AHBENR{}.SRAMEN()    = EnumValue(input); }
         }
         static bool Reset() noexcept
         {
-            using namespace RegisterMap;
+            using namespace MemoryMap;
 
-            if      constexpr(P == PeriphClock::APB2_AFIO)   { APB2RSTR{}.AFIORST()   = true; APB2RSTR{}.AFIORST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB2_GPIOA)  { APB2RSTR{}.IOPARST()   = true; APB2RSTR{}.IOPARST()   = false; return true; }           
-            else if constexpr(P == PeriphClock::APB2_GPIOB)  { APB2RSTR{}.IOPBRST()   = true; APB2RSTR{}.IOPBRST()   = false; return true; }            
-            else if constexpr(P == PeriphClock::APB2_GPIOC)  { APB2RSTR{}.IOPCRST()   = true; APB2RSTR{}.IOPCRST()   = false; return true; }            
-            else if constexpr(P == PeriphClock::APB2_GPIOD)  { APB2RSTR{}.IOPDRST()   = true; APB2RSTR{}.IOPDRST()   = false; return true; }            
-            else if constexpr(P == PeriphClock::APB2_GPIOE)  { APB2RSTR{}.IOPERST()   = true; APB2RSTR{}.IOPERST()   = false; return true; }            
-            else if constexpr(P == PeriphClock::APB2_ADC1)   { APB2RSTR{}.ADC1RST()   = true; APB2RSTR{}.ADC1RST()   = false; return true; }            
-            else if constexpr(P == PeriphClock::APB2_ADC2)   { APB2RSTR{}.ADC2RST()   = true; APB2RSTR{}.ADC2RST()   = false; return true; }            
-            else if constexpr(P == PeriphClock::APB2_TIM1)   { APB2RSTR{}.TIM1RST()   = true; APB2RSTR{}.TIM1RST()   = false; return true; }            
-            else if constexpr(P == PeriphClock::APB2_SPI1)   { APB2RSTR{}.SPI1RST()   = true; APB2RSTR{}.SPI1RST()   = false; return true; }            
-            else if constexpr(P == PeriphClock::APB2_USART1) { APB2RSTR{}.USART1RST() = true; APB2RSTR{}.USART1RST() = false; return true; }
+            if      constexpr(M == Module::APB2_AFIO)   { APB2RSTR{}.AFIORST()   = true; APB2RSTR{}.AFIORST()   = false; return true; }
+            else if constexpr(M == Module::APB2_GPIOA)  { APB2RSTR{}.IOPARST()   = true; APB2RSTR{}.IOPARST()   = false; return true; }           
+            else if constexpr(M == Module::APB2_GPIOB)  { APB2RSTR{}.IOPBRST()   = true; APB2RSTR{}.IOPBRST()   = false; return true; }            
+            else if constexpr(M == Module::APB2_GPIOC)  { APB2RSTR{}.IOPCRST()   = true; APB2RSTR{}.IOPCRST()   = false; return true; }            
+            else if constexpr(M == Module::APB2_GPIOD)  { APB2RSTR{}.IOPDRST()   = true; APB2RSTR{}.IOPDRST()   = false; return true; }            
+            else if constexpr(M == Module::APB2_GPIOE)  { APB2RSTR{}.IOPERST()   = true; APB2RSTR{}.IOPERST()   = false; return true; }            
+            else if constexpr(M == Module::APB2_ADC1)   { APB2RSTR{}.ADC1RST()   = true; APB2RSTR{}.ADC1RST()   = false; return true; }            
+            else if constexpr(M == Module::APB2_ADC2)   { APB2RSTR{}.ADC2RST()   = true; APB2RSTR{}.ADC2RST()   = false; return true; }            
+            else if constexpr(M == Module::APB2_TIM1)   { APB2RSTR{}.TIM1RST()   = true; APB2RSTR{}.TIM1RST()   = false; return true; }            
+            else if constexpr(M == Module::APB2_SPI1)   { APB2RSTR{}.SPI1RST()   = true; APB2RSTR{}.SPI1RST()   = false; return true; }            
+            else if constexpr(M == Module::APB2_USART1) { APB2RSTR{}.USART1RST() = true; APB2RSTR{}.USART1RST() = false; return true; }
             
-            else if constexpr(P == PeriphClock::APB1_TIM2)   { APB1RSTR{}.TIM2RST()   = true; APB1RSTR{}.TIM2RST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_TIM3)   { APB1RSTR{}.TIM3RST()   = true; APB1RSTR{}.TIM3RST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_TIM4)   { APB1RSTR{}.TIM4RST()   = true; APB1RSTR{}.TIM4RST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_WWDG)   { APB1RSTR{}.WWDGRST()   = true; APB1RSTR{}.WWDGRST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_SPI2)   { APB1RSTR{}.SPI2RST()   = true; APB1RSTR{}.SPI2RST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_USART2) { APB1RSTR{}.USART2RST() = true; APB1RSTR{}.USART2RST() = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_USART3) { APB1RSTR{}.USART3RST() = true; APB1RSTR{}.USART3RST() = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_I2C1)   { APB1RSTR{}.I2C1RST()   = true; APB1RSTR{}.I2C1RST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_I2C2)   { APB1RSTR{}.I2C2RST()   = true; APB1RSTR{}.I2C2RST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_CAN1)   { APB1RSTR{}.CAN1RST()   = true; APB1RSTR{}.CAN1RST()   = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_BKP)    { APB1RSTR{}.BKPRST()    = true; APB1RSTR{}.BKPRST()    = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_PWR)    { APB1RSTR{}.PWRRST()    = true; APB1RSTR{}.PWRRST()    = false; return true; }
-            else if constexpr(P == PeriphClock::APB1_USB)    { APB1RSTR{}.USBRST()    = true; APB1RSTR{}.USBRST()    = false; return true; }
+            else if constexpr(M == Module::APB1_TIM2)   { APB1RSTR{}.TIM2RST()   = true; APB1RSTR{}.TIM2RST()   = false; return true; }
+            else if constexpr(M == Module::APB1_TIM3)   { APB1RSTR{}.TIM3RST()   = true; APB1RSTR{}.TIM3RST()   = false; return true; }
+            else if constexpr(M == Module::APB1_TIM4)   { APB1RSTR{}.TIM4RST()   = true; APB1RSTR{}.TIM4RST()   = false; return true; }
+            else if constexpr(M == Module::APB1_WWDG)   { APB1RSTR{}.WWDGRST()   = true; APB1RSTR{}.WWDGRST()   = false; return true; }
+            else if constexpr(M == Module::APB1_SPI2)   { APB1RSTR{}.SPI2RST()   = true; APB1RSTR{}.SPI2RST()   = false; return true; }
+            else if constexpr(M == Module::APB1_USART2) { APB1RSTR{}.USART2RST() = true; APB1RSTR{}.USART2RST() = false; return true; }
+            else if constexpr(M == Module::APB1_USART3) { APB1RSTR{}.USART3RST() = true; APB1RSTR{}.USART3RST() = false; return true; }
+            else if constexpr(M == Module::APB1_I2C1)   { APB1RSTR{}.I2C1RST()   = true; APB1RSTR{}.I2C1RST()   = false; return true; }
+            else if constexpr(M == Module::APB1_I2C2)   { APB1RSTR{}.I2C2RST()   = true; APB1RSTR{}.I2C2RST()   = false; return true; }
+            else if constexpr(M == Module::APB1_CAN1)   { APB1RSTR{}.CAN1RST()   = true; APB1RSTR{}.CAN1RST()   = false; return true; }
+            else if constexpr(M == Module::APB1_BKP)    { APB1RSTR{}.BKPRST()    = true; APB1RSTR{}.BKPRST()    = false; return true; }
+            else if constexpr(M == Module::APB1_PWR)    { APB1RSTR{}.PWRRST()    = true; APB1RSTR{}.PWRRST()    = false; return true; }
+            else if constexpr(M == Module::APB1_USB)    { APB1RSTR{}.USBRST()    = true; APB1RSTR{}.USBRST()    = false; return true; }
             else { return false; }
         }
     };
 
-    template 
-    <
-        SystemClockSource SysClock,
-        HCLK_Prescaler AHB_Divider,
-        PCLK_Prescaler APB2_Divider, 
-        PCLK_Prescaler APB1_Divider,
-        PLL_ClockSource PLL_Clock = PLL_ClockSource::HSI_DIV2,
-        PLL_Multiplier PLL_Multi = PLL_Multiplier::X2
-    >
-    class SystemClock
+    template <typename Properties>
+    class SystemBus : public Properties
     {
     public:
-        constexpr SystemClock() noexcept
+        using Properties::CoreClockSrc;
+        using Properties::AHB_Prescale;
+        using Properties::APB2_Prescale;
+        using Properties::APB1_Prescale;
+        using Properties::PLL_ClockSrc;
+        using Properties::PLL_Multi;
+
+        SystemBus() noexcept
         {
-            using namespace RegisterMap;
+            using namespace MemoryMap;
 
             LL_FLASH_SetLatency(LL_FLASH_LATENCY_0); // TODO: Add flash registers
             while(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_0) {} // TODO: 
 
-            if constexpr(SysClock == SystemClockSource::HSI) { CR{}.EnableHSI(); }
-            else if constexpr(SysClock == SystemClockSource::HSE) { CR{}.EnableHSE(); }
-            else { ConfigurePLL(); }
+            switch (CoreClockSrc)
+            {
+                case SystemClockSource::HSI: CR{}.EnableHSI(); break;
+                case SystemClockSource::HSE: CR{}.EnableHSE(); break;
+                case SystemClockSource::PLL: configure_pll(); break;
+            }
             
-            CFGR{}.SetBusPrescalers(AHB_Divider, APB2_Divider, APB1_Divider);
-            CFGR{}.SetSystemClock(SysClock);
+            CFGR{}.SetBusPrescalers(AHB_Prescale, APB2_Prescale, APB1_Prescale);
+            CFGR{}.SetSystemClock(CoreClockSrc);
 
-            SystemCoreClock = SYSCLK();
+            SystemCoreClock = CoreClock();
         }
-        static constexpr uint32_t SYSCLK() noexcept
+        static constexpr uint32_t CoreClock() noexcept
         {
-            if constexpr (SysClock == SystemClockSource::HSI) { return ::System::HSI_Clock; }
-            if constexpr (SysClock == SystemClockSource::HSE) { return ::System::HSE_Clock; }
-            if constexpr (SysClock == SystemClockSource::PLL) { return 0; }
+            switch (CoreClockSrc)
+            {
+                case SystemClockSource::HSI: return ::System::HSI_Clock;
+                case SystemClockSource::HSE: return ::System::HSE_Clock;
+                case SystemClockSource::PLL: return PLL_Clock();
+            }
         }
-        static constexpr uint32_t AHBCLK() noexcept
+        static constexpr uint32_t AHB_Clock() noexcept
         {
-            return (SYSCLK() / HCLK_Div());
+            return (CoreClock() >> hclk_prescaler());
         }
-        static constexpr uint32_t APB2CLK() noexcept
+        static constexpr uint32_t APB2_Clock() noexcept
         {
-            return (AHBCLK() >> PCLK_Div<APB2_Divider>());
+            return (AHB_Clock() >> pclk_prescaler(APB2_Prescale));
         }
-        static constexpr uint32_t APB1CLK() noexcept
+        static constexpr uint32_t APB1_Clock() noexcept
         {
-            return (AHBCLK() >> PCLK_Div<APB1_Divider>());
+            return (AHB_Clock() >> pclk_prescaler(APB1_Prescale));
         }
-        static constexpr uint32_t PLLCLK() noexcept
+        static constexpr uint32_t PLL_Clock() noexcept
         {
-            return (PLL_SourceFreq() * (Common::Tools::EnumValue(PLL_Multi) + 2u));
+            return (pll_source_freq() * (Common::Tools::EnumValue(PLL_Multi) + 2u));
         }
 
     private:
-        static constexpr void ConfigurePLL() noexcept
+        static void configure_pll() noexcept
         {
-            using namespace RegisterMap;
+            using namespace MemoryMap;
 
             CR{}.DisablePLL();
 
-            if constexpr(PLL_Clock == PLL_ClockSource::HSI_DIV2) { 
-                CR{}.EnableHSI(); 
+            if constexpr(PLL_ClockSrc == PLL_ClockSource::HSI_DIV2)
+            { 
+                CR{}.EnableHSI();
             }
             else { 
-                CR{}.EnableHSE(); 
+                CR{}.EnableHSE();
             }
 
-            CFGR{}.SetPLL_Source(PLL_Clock);
+            CFGR{}.SetPLL_Source(PLL_ClockSrc);
             CFGR{}.SetPLL_Multiplier(PLL_Multi);
 
             CR{}.EnablePLL();
         }
-        static constexpr uint32_t HCLK_Div() noexcept
+        static constexpr uint32_t hclk_prescaler() noexcept
         {
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV1) { return 1u; }
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV2) { return 2u; }
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV4) { return 4u; }
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV8) { return 8u; }
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV16) { return 16u; }
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV64) { return 64u; }
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV128) { return 128u; }
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV256) { return 256u; }
-            if constexpr (AHB_Divider == HCLK_Prescaler::SYSCLK_DIV512) { return 512u; }
+            switch (AHB_Prescale)
+            {
+                case HCLK_Prescaler::SYSCLK_DIV1: return 0u;
+                case HCLK_Prescaler::SYSCLK_DIV2: return 1u;
+                case HCLK_Prescaler::SYSCLK_DIV4: return 2u;
+                case HCLK_Prescaler::SYSCLK_DIV8: return 3u;
+                case HCLK_Prescaler::SYSCLK_DIV16: return 4u;
+                case HCLK_Prescaler::SYSCLK_DIV64: return 6u;
+                case HCLK_Prescaler::SYSCLK_DIV128: return 7u;
+                case HCLK_Prescaler::SYSCLK_DIV256: return 8u;
+                case HCLK_Prescaler::SYSCLK_DIV512: return 9u;
+            }
         }
-        template <PCLK_Prescaler PRE>
-        static constexpr uint32_t PCLK_Div() noexcept
+        static constexpr uint32_t pclk_prescaler(PCLK_Prescaler const input) noexcept
         {
-            if constexpr (PRE == PCLK_Prescaler::HCLK_DIV1) { return 0u; }
-            if constexpr (PRE == PCLK_Prescaler::HCLK_DIV2) { return 1u; }
-            if constexpr (PRE == PCLK_Prescaler::HCLK_DIV4) { return 2u; }
-            if constexpr (PRE == PCLK_Prescaler::HCLK_DIV8) { return 3u; }
-            if constexpr (PRE == PCLK_Prescaler::HCLK_DIV16) { return 4u; }
+            switch(input)
+            {
+                case PCLK_Prescaler::HCLK_DIV1: return 0u;
+                case PCLK_Prescaler::HCLK_DIV2: return 1u;
+                case PCLK_Prescaler::HCLK_DIV4: return 2u;
+                case PCLK_Prescaler::HCLK_DIV8: return 3u;
+                case PCLK_Prescaler::HCLK_DIV16: return 4u;
+            }
         }
-        static constexpr uint32_t PLL_SourceFreq() noexcept
+        static constexpr uint32_t pll_source_freq() noexcept
         {
-            if constexpr (PLL_Clock == PLL_ClockSource::HSI_DIV2) { return (::System::HSI_Clock >> 1u); }
-            if constexpr (PLL_Clock == PLL_ClockSource::HSE) { return ::System::HSE_Clock; }
-            if constexpr (PLL_Clock == PLL_ClockSource::HSE_DIV2) { return (::System::HSE_Clock >> 1u); }
+            switch (PLL_ClockSrc)
+            {
+                case PLL_ClockSource::HSI_DIV2: return (::System::HSI_Clock >> 1u);
+                case PLL_ClockSource::HSE: return ::System::HSE_Clock;
+                case PLL_ClockSource::HSE_DIV2: return (::System::HSE_Clock >> 1u);
+            }
         }
     };
 }

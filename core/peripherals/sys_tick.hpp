@@ -2,19 +2,17 @@
 
 #include "interrupt.hpp"
 
-#include <etl/private/delegate_cpp11.h>
-
 namespace Peripherals::SYSTICK
 {
-    class Module
+    class Interface
     {
     private:
-        using interrupt_t = ISR::Interrupt<Module, ISR::InterruptSource::eSysTick, 1u>;
+        using interrupt_t = ISR::Interrupt<Interface, ISR::InterruptSource::eSysTick, 1u>;
 
-        inline static volatile uint64_t m_count = 0;
+        inline static uint64_t volatile m_count = 0;
 
     public:
-        Module(const uint32_t frequency) noexcept
+        Interface(uint32_t const frequency) noexcept
         {
             SysTick->LOAD = static_cast<uint32_t>((SystemCoreClock / frequency) - 1ull);
             SysTick->VAL = 0ul;
@@ -28,9 +26,9 @@ namespace Peripherals::SYSTICK
         { 
             return m_count; 
         }
-        static void Wait(const uint32_t ticks) noexcept
+        static void Wait(uint32_t const ticks) noexcept
         {
-            const volatile uint64_t end = Tick() + ticks;
+            uint64_t const volatile end = Tick() + ticks;
             while (Tick() < end);
         }
         static void Interrupt() noexcept

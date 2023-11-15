@@ -5,7 +5,7 @@
 #include "sys_tick.hpp"
 
 #include "constants.hpp"
-#include "types.hpp"
+#include "pin_defs.hpp"
 
 #include <cstdint>
 

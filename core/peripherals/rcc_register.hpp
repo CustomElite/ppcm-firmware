@@ -83,7 +83,7 @@ namespace Peripherals::CLK
         };
     }
 
-    namespace RegisterMap
+    namespace MemoryMap
     {
         using namespace Settings;
 
@@ -93,63 +93,73 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto PLLRDY() { return reg_t::template Bits<RCC_CR_PLLRDY>(); }
-            auto PLLON() { return reg_t::template Bits<RCC_CR_PLLON>(); }
-            auto CSSON() { return reg_t::template Bits<RCC_CR_CSSON>(); }
-            auto HSEBYP() { return reg_t::template Bits<RCC_CR_HSEBYP>(); }
-            auto HSERDY() { return reg_t::template Bits<RCC_CR_HSERDY>(); }
-            auto HSEON() { return reg_t::template Bits<RCC_CR_HSEON>(); }
-            auto HSICAL() { return reg_t::template Bits<RCC_CR_HSICAL>(); }
-            auto HSITRIM() { return reg_t::template Bits<RCC_CR_HSITRIM>(); }
-            auto HSIRDY() { return reg_t::template Bits<RCC_CR_HSIRDY>(); }
-            auto HSION() { return reg_t::template Bits<RCC_CR_HSION>(); }
+            // PLL clock ready flag
+            auto PLLRDY() { return reg_t::template Get<RCC_CR_PLLRDY>(); }
+            // PLL enable
+            auto PLLON() { return reg_t::template Get<RCC_CR_PLLON>(); }
+            // Clock security system enable
+            auto CSSON() { return reg_t::template Get<RCC_CR_CSSON>(); }
+            // External high-speed clock bypass
+            auto HSEBYP() { return reg_t::template Get<RCC_CR_HSEBYP>(); }
+            // External high-speed clock ready flag
+            auto HSERDY() { return reg_t::template Get<RCC_CR_HSERDY>(); }
+            // HSE clock enable
+            auto HSEON() { return reg_t::template Get<RCC_CR_HSEON>(); }
+            // Internal high-speed clock calibration
+            auto HSICAL() { return reg_t::template Get<RCC_CR_HSICAL>(); }
+            // Internal high-speed clock trimming
+            auto HSITRIM() { return reg_t::template Get<RCC_CR_HSITRIM>(); }
+            // Internal high-speed clock ready flag
+            auto HSIRDY() { return reg_t::template Get<RCC_CR_HSIRDY>(); }
+            // Internal high-speed clock enable
+            auto HSION() { return reg_t::template Get<RCC_CR_HSION>(); }
 
             void EnablePLL() noexcept
             {
-                if (!PLLON().Get())
+                if (!PLLON().Read())
                 {
                     PLLON() = true;
-                    while(!PLLRDY().Get());
+                    while(!PLLRDY().Read());
                 }
             }
             void DisablePLL() noexcept
             {
-                if (PLLON().Get())
+                if (PLLON().Read())
                 {
                     PLLON() = false;
-                    while(PLLRDY().Get());
+                    while(PLLRDY().Read());
                 }
             }
             void EnableHSE() noexcept
             {
-                if (!HSEON().Get())
+                if (!HSEON().Read())
                 {
                     HSEON() = true;
-                    while(!HSERDY().Get());
+                    while(!HSERDY().Read());
                 }
             }
             void DisableHSE() noexcept
             {
-                if (HSEON().Get())
+                if (HSEON().Read())
                 {
                     HSEON() = false;
-                    while(HSERDY().Get());
+                    while(HSERDY().Read());
                 }
             }
             void EnableHSI() noexcept
             {
-                if (!HSION().Get())
+                if (!HSION().Read())
                 {
                     HSION() = true;
-                    while(!HSIRDY().Get());
+                    while(!HSIRDY().Read());
                 }
             }
             void DisableHSI() noexcept
             {
-                if (HSION().Get())
+                if (HSION().Read())
                 {
                     HSION() = false;
-                    while(HSIRDY().Get());
+                    while(HSIRDY().Read());
                 }
             }
         };
@@ -160,17 +170,28 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto MCO() { return reg_t::template Bits<RCC_CFGR_MCO>(); }
-            auto USBPRE() { return reg_t::template Bits<RCC_CFGR_USBPRE>(); }
-            auto PLLMUL() { return reg_t::template Bits<RCC_CFGR_PLLMULL>(); }
-            auto PLLXTPRE() { return reg_t::template Bits<RCC_CFGR_PLLXTPRE>(); }
-            auto PLLSRC() { return reg_t::template Bits<RCC_CFGR_PLLSRC>(); }
-            auto ADCPRE() { return reg_t::template Bits<RCC_CFGR_ADCPRE>(); }
-            auto PPRE2() { return reg_t::template Bits<RCC_CFGR_PPRE2>(); }
-            auto PPRE1() { return reg_t::template Bits<RCC_CFGR_PPRE1>(); }
-            auto HPRE() { return reg_t::template Bits<RCC_CFGR_HPRE>(); }
-            auto SWS() { return reg_t::template Bits<RCC_CFGR_SWS>(); }
-            auto SW() { return reg_t::template Bits<RCC_CFGR_SW>(); }
+            // Microcontroller clock output
+            auto MCO() { return reg_t::template Get<RCC_CFGR_MCO>(); }
+            // USB prescaler
+            auto USBPRE() { return reg_t::template Get<RCC_CFGR_USBPRE>(); }
+            // PLL multiplication factor
+            auto PLLMUL() { return reg_t::template Get<RCC_CFGR_PLLMULL>(); }
+            // HSE divider for PLL entry
+            auto PLLXTPRE() { return reg_t::template Get<RCC_CFGR_PLLXTPRE>(); }
+            // PLL entry clock source
+            auto PLLSRC() { return reg_t::template Get<RCC_CFGR_PLLSRC>(); }
+            // ADC prescaler
+            auto ADCPRE() { return reg_t::template Get<RCC_CFGR_ADCPRE>(); }
+            // APB high-speed prescaler (APB2)
+            auto PPRE2() { return reg_t::template Get<RCC_CFGR_PPRE2>(); }
+            // APB low-speed prescaler (APB1)
+            auto PPRE1() { return reg_t::template Get<RCC_CFGR_PPRE1>(); }
+            // AHB prescaler
+            auto HPRE() { return reg_t::template Get<RCC_CFGR_HPRE>(); }
+            // System clock switch status
+            auto SWS() { return reg_t::template Get<RCC_CFGR_SWS>(); }
+            // System clock switch
+            auto SW() { return reg_t::template Get<RCC_CFGR_SW>(); }
 
             void SetOutputClock(OutputClockSource const input) noexcept
             {
@@ -206,7 +227,7 @@ namespace Peripherals::CLK
             void SetSystemClock(SystemClockSource const input) noexcept
             {
                 SW() = Common::Tools::EnumValue(input);
-                while(SWS().Get() != Common::Tools::EnumValue(input));
+                while(SWS().Read() != Common::Tools::EnumValue(input));
             }
             void SetBusPrescalers(HCLK_Prescaler const AHB, PCLK_Prescaler const APB2, PCLK_Prescaler const APB1) noexcept
             {
@@ -222,23 +243,40 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto CSSC()  { return reg_t::template Bits<RCC_CIR_CSSC>(); }
-            auto PLLRDYC() { return reg_t::template Bits<RCC_CIR_PLLRDYC>(); }
-            auto HSERDYC() { return reg_t::template Bits<RCC_CIR_HSERDYC>(); }
-            auto HSIRDYC() { return reg_t::template Bits<RCC_CIR_HSIRDYC>(); }
-            auto LSERDYC() { return reg_t::template Bits<RCC_CIR_LSERDYC>(); }
-            auto LSIRDYC() { return reg_t::template Bits<RCC_CIR_LSIRDYC>(); }
-            auto PLLRDYIE() { return reg_t::template Bits<RCC_CIR_PLLRDYIE>(); }
-            auto HSERDYIE() { return reg_t::template Bits<RCC_CIR_HSERDYIE>(); }
-            auto HSIRDYIE() { return reg_t::template Bits<RCC_CIR_HSIRDYIE>(); }
-            auto LSERDYIE() { return reg_t::template Bits<RCC_CIR_LSERDYIE>(); }
-            auto LSIRDYIE() { return reg_t::template Bits<RCC_CIR_LSIRDYIE>(); }
-            auto CSSF() { return reg_t::template Bits<RCC_CIR_CSSF>(); }
-            auto PLLRDYF() { return reg_t::template Bits<RCC_CIR_PLLRDYF>(); }
-            auto HSERDYF() { return reg_t::template Bits<RCC_CIR_HSERDYF>(); }
-            auto HSIRDYF() { return reg_t::template Bits<RCC_CIR_HSIRDYF>(); }
-            auto LSERDYF() { return reg_t::template Bits<RCC_CIR_LSERDYF>(); }
-            auto LSIRDYF() { return reg_t::template Bits<RCC_CIR_LSIRDYF>(); }
+            // Clock security system interrupt clear
+            auto CSSC()  { return reg_t::template Get<RCC_CIR_CSSC>(); }
+            // PLL ready interrupt clear
+            auto PLLRDYC() { return reg_t::template Get<RCC_CIR_PLLRDYC>(); }
+            // HSE ready interrupt clear
+            auto HSERDYC() { return reg_t::template Get<RCC_CIR_HSERDYC>(); }
+            // HSI ready interrupt clear
+            auto HSIRDYC() { return reg_t::template Get<RCC_CIR_HSIRDYC>(); }
+            // LSE ready interrupt clear
+            auto LSERDYC() { return reg_t::template Get<RCC_CIR_LSERDYC>(); }
+            // LSI ready interrupt clear
+            auto LSIRDYC() { return reg_t::template Get<RCC_CIR_LSIRDYC>(); }
+            // PLL ready interrupt enable
+            auto PLLRDYIE() { return reg_t::template Get<RCC_CIR_PLLRDYIE>(); }
+            // HSE ready interrupt enable
+            auto HSERDYIE() { return reg_t::template Get<RCC_CIR_HSERDYIE>(); }
+            // HSI ready interrupt enable
+            auto HSIRDYIE() { return reg_t::template Get<RCC_CIR_HSIRDYIE>(); }
+            // LSE ready interrupt enable
+            auto LSERDYIE() { return reg_t::template Get<RCC_CIR_LSERDYIE>(); }
+            // LSI ready interrupt enable
+            auto LSIRDYIE() { return reg_t::template Get<RCC_CIR_LSIRDYIE>(); }
+            // Clock security system interrupt flag
+            auto CSSF() { return reg_t::template Get<RCC_CIR_CSSF>(); }
+            // PLL ready interrupt flag
+            auto PLLRDYF() { return reg_t::template Get<RCC_CIR_PLLRDYF>(); }
+            // HSE ready interrupt flag
+            auto HSERDYF() { return reg_t::template Get<RCC_CIR_HSERDYF>(); }
+            // HSI ready interrupt flag
+            auto HSIRDYF() { return reg_t::template Get<RCC_CIR_HSIRDYF>(); }
+            // LSE ready interrupt flag
+            auto LSERDYF() { return reg_t::template Get<RCC_CIR_LSERDYF>(); }
+            // LSI ready interrupt flag
+            auto LSIRDYF() { return reg_t::template Get<RCC_CIR_LSIRDYF>(); }
         };
 
 
@@ -249,17 +287,28 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto USART1RST() { return reg_t::template Bits<RCC_APB2RSTR_USART1RST>(); }
-            auto SPI1RST() { return reg_t::template Bits<RCC_APB2RSTR_SPI1RST>(); }
-            auto TIM1RST() { return reg_t::template Bits<RCC_APB2RSTR_TIM1RST>(); }
-            auto ADC2RST() { return reg_t::template Bits<RCC_APB2RSTR_ADC2RST>(); }
-            auto ADC1RST() { return reg_t::template Bits<RCC_APB2RSTR_ADC1RST>(); }
-            auto IOPERST() { return reg_t::template Bits<RCC_APB2RSTR_IOPERST>(); }
-            auto IOPDRST() { return reg_t::template Bits<RCC_APB2RSTR_IOPDRST>(); }
-            auto IOPCRST() { return reg_t::template Bits<RCC_APB2RSTR_IOPCRST>(); }
-            auto IOPBRST() { return reg_t::template Bits<RCC_APB2RSTR_IOPBRST>(); }
-            auto IOPARST() { return reg_t::template Bits<RCC_APB2RSTR_IOPARST>(); }
-            auto AFIORST() { return reg_t::template Bits<RCC_APB2RSTR_AFIORST>(); }
+            // USART1 reset
+            auto USART1RST() { return reg_t::template Get<RCC_APB2RSTR_USART1RST>(); }
+            // SPI1 reset
+            auto SPI1RST() { return reg_t::template Get<RCC_APB2RSTR_SPI1RST>(); }
+            // TIM1 timer reset
+            auto TIM1RST() { return reg_t::template Get<RCC_APB2RSTR_TIM1RST>(); }
+            // ADC 2 interface reset
+            auto ADC2RST() { return reg_t::template Get<RCC_APB2RSTR_ADC2RST>(); }
+            // ADC 1 interface reset
+            auto ADC1RST() { return reg_t::template Get<RCC_APB2RSTR_ADC1RST>(); }
+            // IO port E reset
+            auto IOPERST() { return reg_t::template Get<RCC_APB2RSTR_IOPERST>(); }
+            // IO port D reset
+            auto IOPDRST() { return reg_t::template Get<RCC_APB2RSTR_IOPDRST>(); }
+            // IO port C reset
+            auto IOPCRST() { return reg_t::template Get<RCC_APB2RSTR_IOPCRST>(); }
+            // IO port B reset
+            auto IOPBRST() { return reg_t::template Get<RCC_APB2RSTR_IOPBRST>(); }
+            // IO port A reset
+            auto IOPARST() { return reg_t::template Get<RCC_APB2RSTR_IOPARST>(); }
+            // Alternate function IO reset
+            auto AFIORST() { return reg_t::template Get<RCC_APB2RSTR_AFIORST>(); }
         };
 
         template <uint32_t ADDR>
@@ -268,19 +317,19 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto PWRRST() { return reg_t::template Bits<RCC_APB1RSTR_PWRRST>(); }
-            auto BKPRST() { return reg_t::template Bits<RCC_APB1RSTR_BKPRST>(); }
-            auto CAN1RST() { return reg_t::template Bits<RCC_APB1RSTR_CAN1RST>(); }
-            auto USBRST() { return reg_t::template Bits<RCC_APB1RSTR_USBRST>(); }
-            auto I2C2RST() { return reg_t::template Bits<RCC_APB1RSTR_I2C2RST>(); }
-            auto I2C1RST() { return reg_t::template Bits<RCC_APB1RSTR_I2C1RST>(); }
-            auto USART3RST() { return reg_t::template Bits<RCC_APB1RSTR_USART3RST>(); }
-            auto USART2RST() { return reg_t::template Bits<RCC_APB1RSTR_USART2RST>(); }
-            auto SPI2RST() { return reg_t::template Bits<RCC_APB1RSTR_SPI2RST>(); }
-            auto WWDGRST() { return reg_t::template Bits<RCC_APB1RSTR_WWDGRST>(); }
-            auto TIM4RST() { return reg_t::template Bits<RCC_APB1RSTR_TIM4RST>(); }
-            auto TIM3RST() { return reg_t::template Bits<RCC_APB1RSTR_TIM3RST>(); }
-            auto TIM2RST() { return reg_t::template Bits<RCC_APB1RSTR_TIM2RST>(); }
+            auto PWRRST() { return reg_t::template Get<RCC_APB1RSTR_PWRRST>(); }
+            auto BKPRST() { return reg_t::template Get<RCC_APB1RSTR_BKPRST>(); }
+            auto CAN1RST() { return reg_t::template Get<RCC_APB1RSTR_CAN1RST>(); }
+            auto USBRST() { return reg_t::template Get<RCC_APB1RSTR_USBRST>(); }
+            auto I2C2RST() { return reg_t::template Get<RCC_APB1RSTR_I2C2RST>(); }
+            auto I2C1RST() { return reg_t::template Get<RCC_APB1RSTR_I2C1RST>(); }
+            auto USART3RST() { return reg_t::template Get<RCC_APB1RSTR_USART3RST>(); }
+            auto USART2RST() { return reg_t::template Get<RCC_APB1RSTR_USART2RST>(); }
+            auto SPI2RST() { return reg_t::template Get<RCC_APB1RSTR_SPI2RST>(); }
+            auto WWDGRST() { return reg_t::template Get<RCC_APB1RSTR_WWDGRST>(); }
+            auto TIM4RST() { return reg_t::template Get<RCC_APB1RSTR_TIM4RST>(); }
+            auto TIM3RST() { return reg_t::template Get<RCC_APB1RSTR_TIM3RST>(); }
+            auto TIM2RST() { return reg_t::template Get<RCC_APB1RSTR_TIM2RST>(); }
         };
 
         template <uint32_t ADDR>
@@ -289,10 +338,10 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto CRCEN() { return reg_t::template Bits<RCC_AHBENR_CRCEN>(); }
-            auto FLITFEN() { return reg_t::template Bits<RCC_AHBENR_FLITFEN>(); }
-            auto SRAMEN() { return reg_t::template Bits<RCC_AHBENR_SRAMEN>(); }
-            auto DMA1EN() { return reg_t::template Bits<RCC_AHBENR_DMA1EN>(); }
+            auto CRCEN() { return reg_t::template Get<RCC_AHBENR_CRCEN>(); }
+            auto FLITFEN() { return reg_t::template Get<RCC_AHBENR_FLITFEN>(); }
+            auto SRAMEN() { return reg_t::template Get<RCC_AHBENR_SRAMEN>(); }
+            auto DMA1EN() { return reg_t::template Get<RCC_AHBENR_DMA1EN>(); }
         };
 
         template <uint32_t ADDR>
@@ -301,17 +350,17 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto USART1EN() { return reg_t::template Bits<RCC_APB2ENR_USART1EN>(); }
-            auto SPI1EN() { return reg_t::template Bits<RCC_APB2ENR_SPI1EN>(); }
-            auto TIM1EN() { return reg_t::template Bits<RCC_APB2ENR_TIM1EN>(); }
-            auto ADC2EN() { return reg_t::template Bits<RCC_APB2ENR_ADC2EN>(); }
-            auto ADC1EN() { return reg_t::template Bits<RCC_APB2ENR_ADC1EN>(); }
-            auto IOPEEN() { return reg_t::template Bits<RCC_APB2ENR_IOPEEN>(); }
-            auto IOPDEN() { return reg_t::template Bits<RCC_APB2ENR_IOPDEN>(); }
-            auto IOPCEN() { return reg_t::template Bits<RCC_APB2ENR_IOPCEN>(); }
-            auto IOPBEN() { return reg_t::template Bits<RCC_APB2ENR_IOPBEN>(); }
-            auto IOPAEN() { return reg_t::template Bits<RCC_APB2ENR_IOPAEN>(); }
-            auto AFIOEN() { return reg_t::template Bits<RCC_APB2ENR_AFIOEN>(); }
+            auto USART1EN() { return reg_t::template Get<RCC_APB2ENR_USART1EN>(); }
+            auto SPI1EN() { return reg_t::template Get<RCC_APB2ENR_SPI1EN>(); }
+            auto TIM1EN() { return reg_t::template Get<RCC_APB2ENR_TIM1EN>(); }
+            auto ADC2EN() { return reg_t::template Get<RCC_APB2ENR_ADC2EN>(); }
+            auto ADC1EN() { return reg_t::template Get<RCC_APB2ENR_ADC1EN>(); }
+            auto IOPEEN() { return reg_t::template Get<RCC_APB2ENR_IOPEEN>(); }
+            auto IOPDEN() { return reg_t::template Get<RCC_APB2ENR_IOPDEN>(); }
+            auto IOPCEN() { return reg_t::template Get<RCC_APB2ENR_IOPCEN>(); }
+            auto IOPBEN() { return reg_t::template Get<RCC_APB2ENR_IOPBEN>(); }
+            auto IOPAEN() { return reg_t::template Get<RCC_APB2ENR_IOPAEN>(); }
+            auto AFIOEN() { return reg_t::template Get<RCC_APB2ENR_AFIOEN>(); }
         };
 
         template <uint32_t ADDR>
@@ -320,19 +369,19 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto PWREN() { return reg_t::template Bits<RCC_APB1ENR_PWREN>(); }
-            auto BKPEN() { return reg_t::template Bits<RCC_APB1ENR_BKPEN>(); }
-            auto CAN1EN() { return reg_t::template Bits<RCC_APB1ENR_CAN1EN>(); }
-            auto USBEN() { return reg_t::template Bits<RCC_APB1ENR_USBEN>(); }
-            auto I2C2EN() { return reg_t::template Bits<RCC_APB1ENR_I2C2EN>(); }
-            auto I2C1EN() { return reg_t::template Bits<RCC_APB1ENR_I2C1EN>(); }
-            auto USART3EN() { return reg_t::template Bits<RCC_APB1ENR_USART3EN>(); }
-            auto USART2EN() { return reg_t::template Bits<RCC_APB1ENR_USART2EN>(); }
-            auto SPI2EN() { return reg_t::template Bits<RCC_APB1ENR_SPI2EN>(); }
-            auto WWDGEN() { return reg_t::template Bits<RCC_APB1ENR_WWDGEN>(); }
-            auto TIM4EN() { return reg_t::template Bits<RCC_APB1ENR_TIM4EN>(); }
-            auto TIM3EN() { return reg_t::template Bits<RCC_APB1ENR_TIM3EN>(); }
-            auto TIM2EN() { return reg_t::template Bits<RCC_APB1ENR_TIM2EN>(); }
+            auto PWREN() { return reg_t::template Get<RCC_APB1ENR_PWREN>(); }
+            auto BKPEN() { return reg_t::template Get<RCC_APB1ENR_BKPEN>(); }
+            auto CAN1EN() { return reg_t::template Get<RCC_APB1ENR_CAN1EN>(); }
+            auto USBEN() { return reg_t::template Get<RCC_APB1ENR_USBEN>(); }
+            auto I2C2EN() { return reg_t::template Get<RCC_APB1ENR_I2C2EN>(); }
+            auto I2C1EN() { return reg_t::template Get<RCC_APB1ENR_I2C1EN>(); }
+            auto USART3EN() { return reg_t::template Get<RCC_APB1ENR_USART3EN>(); }
+            auto USART2EN() { return reg_t::template Get<RCC_APB1ENR_USART2EN>(); }
+            auto SPI2EN() { return reg_t::template Get<RCC_APB1ENR_SPI2EN>(); }
+            auto WWDGEN() { return reg_t::template Get<RCC_APB1ENR_WWDGEN>(); }
+            auto TIM4EN() { return reg_t::template Get<RCC_APB1ENR_TIM4EN>(); }
+            auto TIM3EN() { return reg_t::template Get<RCC_APB1ENR_TIM3EN>(); }
+            auto TIM2EN() { return reg_t::template Get<RCC_APB1ENR_TIM2EN>(); }
         };
 
         template <uint32_t ADDR>
@@ -341,12 +390,12 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto BDRST() { return reg_t::template Bits<RCC_BDCR_BDRST>(); }
-            auto RTCEN() { return reg_t::template Bits<RCC_BDCR_RTCEN>(); }
-            auto RTCSEL() { return reg_t::template Bits<RCC_BDCR_RTCSEL>(); }
-            auto LSEBYP() { return reg_t::template Bits<RCC_BDCR_LSEBYP>(); }
-            auto LSERDY() { return reg_t::template Bits<RCC_BDCR_LSERDY>(); }
-            auto LSEON() { return reg_t::template Bits<RCC_BDCR_LSEON>(); }
+            auto BDRST() { return reg_t::template Get<RCC_BDCR_BDRST>(); }
+            auto RTCEN() { return reg_t::template Get<RCC_BDCR_RTCEN>(); }
+            auto RTCSEL() { return reg_t::template Get<RCC_BDCR_RTCSEL>(); }
+            auto LSEBYP() { return reg_t::template Get<RCC_BDCR_LSEBYP>(); }
+            auto LSERDY() { return reg_t::template Get<RCC_BDCR_LSERDY>(); }
+            auto LSEON() { return reg_t::template Get<RCC_BDCR_LSEON>(); }
 
             void ConfigureRTC(RTC_ClockSource const input) noexcept
             {
@@ -359,18 +408,18 @@ namespace Peripherals::CLK
             }
             void EnableLSE() noexcept
             {
-                if (!LSEON().Get())
+                if (!LSEON().Read())
                 {
                     LSEON() = true;
-                    while(!LSERDY().Get());
+                    while(!LSERDY().Read());
                 }
             }
             void DisableLSE() noexcept
             {
-                if (LSEON().Get())
+                if (LSEON().Read())
                 {
                     LSEON() = false;
-                    while(LSERDY().Get());
+                    while(LSERDY().Read());
                 }
             }
         };
@@ -381,15 +430,15 @@ namespace Peripherals::CLK
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            auto LPWRRSTF() { return reg_t::template Bits<RCC_CSR_LPWRRSTF>(); }
-            auto WWDGRSTF() { return reg_t::template Bits<RCC_CSR_WWDGRSTF>(); }
-            auto IWDGRSTF() { return reg_t::template Bits<RCC_CSR_IWDGRSTF>(); }
-            auto SFTRSTF() { return reg_t::template Bits<RCC_CSR_SFTRSTF>(); }
-            auto PORRSTF() { return reg_t::template Bits<RCC_CSR_PORRSTF>(); }
-            auto PINRSTF() { return reg_t::template Bits<RCC_CSR_PINRSTF>(); }
-            auto RMVF() { return reg_t::template Bits<RCC_CSR_RMVF>(); }
-            auto LSIRDY() { return reg_t::template Bits<RCC_CSR_LSIRDY>(); }
-            auto LSION() { return reg_t::template Bits<RCC_CSR_LSION>(); }
+            auto LPWRRSTF() { return reg_t::template Get<RCC_CSR_LPWRRSTF>(); }
+            auto WWDGRSTF() { return reg_t::template Get<RCC_CSR_WWDGRSTF>(); }
+            auto IWDGRSTF() { return reg_t::template Get<RCC_CSR_IWDGRSTF>(); }
+            auto SFTRSTF() { return reg_t::template Get<RCC_CSR_SFTRSTF>(); }
+            auto PORRSTF() { return reg_t::template Get<RCC_CSR_PORRSTF>(); }
+            auto PINRSTF() { return reg_t::template Get<RCC_CSR_PINRSTF>(); }
+            auto RMVF() { return reg_t::template Get<RCC_CSR_RMVF>(); }
+            auto LSIRDY() { return reg_t::template Get<RCC_CSR_LSIRDY>(); }
+            auto LSION() { return reg_t::template Get<RCC_CSR_LSION>(); }
 
             void ClearResetFlags() noexcept
             {
@@ -397,18 +446,18 @@ namespace Peripherals::CLK
             }
             void EnableLSI() noexcept
             {
-                if (!LSION().Get())
+                if (!LSION().Read())
                 {
                     LSION() = true;
-                    while(!LSIRDY().Get());
+                    while(!LSIRDY().Read());
                 }
             }
             void DisableLSI() noexcept
             {
-                if (LSION().Get())
+                if (LSION().Read())
                 {
                     LSION() = false;
-                    while(LSIRDY().Get());
+                    while(LSIRDY().Read());
                 }
             }
         };

@@ -43,7 +43,7 @@ namespace Common
         {
             if (s_dataPtr)
             {
-                static_cast<T*>(s_data)->~T();
+                ((T*)s_data) -> ~T();
                 s_dataPtr = nullptr;
             }
         }
@@ -51,7 +51,7 @@ namespace Common
         {
             Destruct();
             ::new(s_data) T{ std::move(function) };
-            s_dataPtr = static_cast<T*>(s_data);
+            s_dataPtr = (T*)&s_data[0];
         }
 
     public:

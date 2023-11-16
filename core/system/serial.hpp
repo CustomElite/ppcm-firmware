@@ -23,6 +23,8 @@ namespace System
         static constexpr uint8_t BufferSize = 64u;
         static constexpr bool ACK = true;
 
+        using 
+/*
         USART_Properties() noexcept :
             m_tx{ IO::Alternate::PushPull },
             m_rx{ IO::Input::PuPd, IO::PullResistor::PullUp }
@@ -31,6 +33,7 @@ namespace System
     private:
         USART_TX const m_tx;
         USART_RX const m_rx;
+*/
     };
 
     template <typename SYS, typename GoodFunc, typename BadFunc>

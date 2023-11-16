@@ -61,7 +61,7 @@ namespace System
     public:
         static void StatusGood() noexcept
         {
-            for (uint8_t i = 0; i < 4u; ++i)
+            for (uint8_t i = 0; i < 2u; ++i)
             {
                 m_system.statusLED = IO::State::Low;
                 m_system.sysTick.Wait(0.15_sec);
@@ -71,7 +71,7 @@ namespace System
         }
         static void StatusBad() noexcept
         {
-            for (uint8_t i = 0; i < 4u; ++i)
+            for (uint8_t i = 0; i < 2u; ++i)
             {
                 m_system.statusLED = IO::State::Low;
                 m_system.sysTick.Wait(1_sec);

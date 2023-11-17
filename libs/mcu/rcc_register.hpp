@@ -1,11 +1,11 @@
 #pragma once
 
-#include "register.hpp"
-#include "tools.hpp"
+#include "common/register.hpp"
+#include "common/tools.hpp"
 
 #include "stm32f1xx.h"
 
-namespace Peripherals::CLK 
+namespace MCU::CLK 
 {
     namespace Settings 
     {

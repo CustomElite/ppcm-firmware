@@ -1,11 +1,11 @@
 #pragma once
 
-#include "tools.hpp"
-#include "register.hpp"
+#include "common/tools.hpp"
+#include "common/register.hpp"
 
 #include "stm32f1xx.h"
 
-namespace Peripherals::USART
+namespace MCU::USART
 {
     namespace Settings
     {

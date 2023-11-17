@@ -1,13 +1,14 @@
 #pragma once
 
+#include "macros.h"
+
+#include "mcu/rcc.hpp"
+#include "rcc.hpp"
 #include "gpio_registers.hpp"
 
-#include "rcc.hpp"
+#include "common/run_once.hpp"
 
-#include "macros.h"
-#include "run_once.hpp"
-
-namespace Peripherals::IO 
+namespace MCU::IO 
 {
     using namespace Settings;
 
@@ -32,11 +33,11 @@ namespace Peripherals::IO
     private:
         static constexpr auto GetClockModule() noexcept
         {
-            if constexpr (P == Port::A) { return CLK::Module::APB2_GPIOA; }
-            if constexpr (P == Port::B) { return CLK::Module::APB2_GPIOB; }
-            if constexpr (P == Port::C) { return CLK::Module::APB2_GPIOC; }
-            if constexpr (P == Port::D) { return CLK::Module::APB2_GPIOD; }
-            if constexpr (P == Port::E) { return CLK::Module::APB2_GPIOE; }
+            if constexpr (P == Port::A) { return CLK::Peripheral::APB2_GPIOA; }
+            if constexpr (P == Port::B) { return CLK::Peripheral::APB2_GPIOB; }
+            if constexpr (P == Port::C) { return CLK::Peripheral::APB2_GPIOC; }
+            if constexpr (P == Port::D) { return CLK::Peripheral::APB2_GPIOD; }
+            if constexpr (P == Port::E) { return CLK::Peripheral::APB2_GPIOE; }
         }
 
         using clk_t = CLK::Control<GetClockModule()>;

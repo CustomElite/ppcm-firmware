@@ -1,6 +1,5 @@
 #pragma once
 
-#include <etl/power.h>
 #include <utility>
 #include <type_traits>
 #include <array>

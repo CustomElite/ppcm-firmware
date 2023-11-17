@@ -1,17 +1,17 @@
 #pragma once
 
-#include "gpio.hpp"
-
 #include "serial.hpp"
-#include "sys_tick.hpp"
 #include "pin_defs.hpp"
 #include "constants.hpp"
+
+#include "mcu/gpio.hpp"
+#include "mcu/sys_tick.hpp"
 
 #include <cstdint>
 
 namespace System
 {
-    using namespace Peripherals;
+    using namespace MCU;
 
     class SystemCore
     {

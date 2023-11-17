@@ -1,15 +1,12 @@
 #pragma once
 
-#include "rcc.hpp"
-#include "gpio.hpp"
-#include "sys_tick.hpp"
-
-#include "constants.hpp"
-#include "pin_defs.hpp"
+#include "mcu/rcc.hpp"
+#include "mcu/gpio.hpp"
+#include "mcu/sys_tick.hpp"
 
 #include <cstdint>
 
-using namespace Peripherals;
+using namespace MCU;
 using namespace System;
 
 #ifndef NVIC_PRIORITYGROUP_0

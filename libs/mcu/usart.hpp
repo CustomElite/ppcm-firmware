@@ -1,43 +1,45 @@
 #pragma once
 
+#include "mcu/rcc.hpp"
+#include "types.hpp"
+
+#include "gpio.hpp"
+#include "interrupt.hpp"
 #include "usart_registers.hpp"
 
-#include "interrupt.hpp"
-
-#include "types.hpp"
-#include "run_once.hpp"
-#include "static_lambda.hpp"
-#include "containers/fifo.hpp"
+#include "common/run_once.hpp"
+#include "common/static_lambda.hpp"
+#include "common/containers/fifo.hpp"
 
 #include <cstdint>
 
-namespace Peripherals::USART 
+namespace MCU::USART 
 {
     //using namespace Settings;
 
-    enum class Module : uint8_t
+    enum class Peripheral : uint8_t
     {
         USART_1 = 1u,
         USART_2,
         USART_3
     };
 
-    template <Module M>
+    template <Peripheral M>
     static constexpr auto GetClockModule() noexcept
     {
-        if constexpr (M == Module::USART_1) { return CLK::Module::APB2_USART1; }
-        if constexpr (M == Module::USART_2) { return CLK::Module::APB1_USART2; }
-        if constexpr (M == Module::USART_3) { return CLK::Module::APB1_USART3; }
+        if constexpr (M == Peripheral::USART_1) { return CLK::Peripheral::APB2_USART1; }
+        if constexpr (M == Peripheral::USART_2) { return CLK::Peripheral::APB1_USART2; }
+        if constexpr (M == Peripheral::USART_3) { return CLK::Peripheral::APB1_USART3; }
     }
-    template <Module M>
+    template <Peripheral M>
     static constexpr auto GetInterruptSource() noexcept
     {
-        if constexpr (M == Module::USART_1) { return Peripherals::ISR::InterruptSource::eUSART1; }
-        if constexpr (M == Module::USART_2) { return Peripherals::ISR::InterruptSource::eUSART2; }
-        if constexpr (M == Module::USART_3) { return Peripherals::ISR::InterruptSource::eUSART3; }
+        if constexpr (M == Peripheral::USART_1) { return MCU::ISR::InterruptSource::eUSART1; }
+        if constexpr (M == Peripheral::USART_2) { return MCU::ISR::InterruptSource::eUSART2; }
+        if constexpr (M == Peripheral::USART_3) { return MCU::ISR::InterruptSource::eUSART3; }
     }
 
-    template <Module M>
+    template <Peripheral M>
     struct PowerKernal
     {
         using clk_t = CLK::Control<GetClockModule<M>()>;
@@ -139,6 +141,9 @@ namespace Peripherals::USART
         using Properties::FlowControl;
         using Properties::ACK;
 
+        using TX_Pin = typename Properties::TX_Pin;
+        using RX_Pin = typename Properties::RX_Pin;
+
         using REGS = MemoryMap::Registers<Common::Tools::EnumValue(Module)>;
         using SR = typename REGS::SR_t;
         using DR = typename REGS::DR_t;
@@ -158,6 +163,9 @@ namespace Peripherals::USART
         interrupt_t const m_interrupt;
         callback_t const m_callback;
 
+        TX_Pin const m_tx;
+        RX_Pin const m_rx;
+
         //inline static data_handler_t m_data{};
 
     public:
@@ -165,14 +173,16 @@ namespace Peripherals::USART
         Interface(C && callback) noexcept :
             m_kernal{},
             m_interrupt{},
-            m_callback{ std::forward<C>(callback) }
+            m_callback{ std::forward<C>(callback) },
+            m_tx{ IO::Alternate::PushPull },
+            m_rx{ IO::Input::PuPd, IO::PullResistor::PullUp }
         {
             CR1{}.SetDataWidth(DataWidth);
             CR1{}.SetParity(Parity);
             CR2{}.SetStopBits(StopBits);
             CR3{}.SetFlowControl(FlowControl);
 
-            if constexpr (Module == Module::USART_1)
+            if constexpr (Module == Peripheral::USART_1)
             {
                 BRR{}.SetBaudRate(::System::SystemBus_t::APB2_Clock(), BaudRate);
             }

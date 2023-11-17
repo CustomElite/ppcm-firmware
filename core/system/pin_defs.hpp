@@ -1,10 +1,10 @@
 #pragma once
 
-#include "gpio.hpp"
+#include "mcu/gpio.hpp"
 
 namespace System
 {
-    using namespace Peripherals;
+    using namespace MCU;
 
     using ADC_CS = IO::Interface<IO::Port::B, 12>;
     using ADC_BUSY = IO::Interface<IO::Port::B, 11>;

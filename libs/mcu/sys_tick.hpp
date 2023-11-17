@@ -2,7 +2,7 @@
 
 #include "interrupt.hpp"
 
-namespace Peripherals::SYSTICK
+namespace MCU::SYSTICK
 {
     class Interface
     {

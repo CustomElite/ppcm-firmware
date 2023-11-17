@@ -1,13 +1,13 @@
 #pragma once
 
 #include "macros.h"
-#include "math.hpp"
-#include "tools.hpp"
+
+#include "common/math.hpp"
+#include "common/tools.hpp"
 
 #include "stm32f1xx.h"
-#include <new>
 
-namespace Peripherals::ISR
+namespace MCU::ISR
 {
     enum class InterruptSource
     {

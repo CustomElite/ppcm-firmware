@@ -15,17 +15,13 @@ set(STM32_MCU STM32F103xB)
 set(STM32_FAMILY STM32F1xx)
 
 # Linker script
-set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/mcu/linker_stm32f1c8tx.ld)
+set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/linker_stm32f1c8tx.ld)
 # ST startup script
-set(STARTUP_SCRIPT ${CMAKE_SOURCE_DIR}/mcu/startup_stm32f103xb.s)
+set(STARTUP_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/startup_stm32f103xb.s)
 
-add_subdirectory(libs/etl)
-#add_subdirectory(drivers)
-
+# Core project files directory
 set(PROJECT_INCLUDE_DIR
     core/include
-    core/common
-    core/peripherals
     core/system)
 
 set(DRIVER_INCLUDE_DIR 
@@ -34,7 +30,7 @@ set(DRIVER_INCLUDE_DIR
     drivers/${STM32_FAMILY}/include)
 
 set(LIBS_DIR
-    libs/printf)
+    libs)
 
 # Source files
 file(GLOB PROJECT_SRC CONFIGURE_DEPENDS
@@ -64,8 +60,8 @@ add_executable(${CMAKE_PROJECT_NAME}
     ${LIBS_SRC}
     ${STARTUP_SCRIPT})
 
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
-    etl)
+#target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE 
+#    etl)
 
 # Include directories
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE

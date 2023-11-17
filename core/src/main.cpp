@@ -1,14 +1,13 @@
 #include "main.h"
-#include "gpio.hpp"
+
 #include "mcu.h"
 #include "serial.hpp"
-
-#include "printf.h"
-#include "sys_tick.hpp"
 #include "system.hpp"
+#include "constants.hpp"
+#include "pin_defs.hpp"
 
-#include <etl/singleton.h>
-#include <etl/binary.h>
+#include "printf/printf.h"
+
 
 uint16_t watch{0};
 uint32_t timer{0};

@@ -1,12 +1,13 @@
 #pragma once
 
-#include "register.hpp"
-#include "tools.hpp"
-
 #include "mcu_config.hpp"
+
+#include "common/tools.hpp"
+#include "common/register.hpp"
+
 #include <type_traits>
 
-namespace Peripherals::IO
+namespace MCU::IO
 {
     using namespace Common;
 

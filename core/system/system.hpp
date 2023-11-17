@@ -5,6 +5,7 @@
 #include "constants.hpp"
 
 #include "mcu/gpio.hpp"
+#include "mcu/bus.hpp"
 #include "mcu/sys_tick.hpp"
 
 #include <cstdint>
@@ -16,8 +17,7 @@ namespace System
     class SystemCore
     {
     public:
-        SystemCore() noexcept
-        {}
+        constexpr SystemCore() noexcept = default;
 
         static uint64_t Tick() noexcept
         {
@@ -40,25 +40,6 @@ namespace System
 
             return serial;
         }
-    private:
-        using SystemTick_t = SYSTICK::Interface;
-
-        struct Components
-        {
-            SystemBus_t sysBus;
-            SystemTick_t sysTick;
-            STATUS_LED statusLED;
-
-            Components() noexcept :
-                sysBus{},
-                sysTick{ 1000_u32 },
-                statusLED{ IO::Output::PushPull, IO::State::High }
-            {}
-        };
-
-        inline static Components m_system{};
-
-    public:
         static void StatusGood() noexcept
         {
             for (uint8_t i = 0; i < 2u; ++i)
@@ -79,6 +60,24 @@ namespace System
                 m_system.sysTick.Wait(0.15_sec);
             }
         }
+
+    private:
+        using SystemTick_t = SYSTICK::Interface;
+
+        struct Components
+        {
+            SystemBus_t sysBus;
+            SystemTick_t sysTick;
+            STATUS_LED statusLED;
+
+            Components() noexcept :
+                sysBus{},
+                sysTick{ 1000_u32 },
+                statusLED{ IO::Output::PushPull, IO::State::High }
+            {}
+        };
+
+        inline static Components m_system{};
     };
 
     inline SystemCore CreateSystem() noexcept

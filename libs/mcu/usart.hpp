@@ -1,5 +1,6 @@
 #pragma once
 
+#include "macros.h"
 #include "mcu/rcc.hpp"
 #include "types.hpp"
 
@@ -46,11 +47,12 @@ namespace MCU::USART
 
         static void Construct() noexcept
         {
-            clk_t::Power();
+            clk_t::Power(CLK::State::On);
         }
         static void Destruct() noexcept
         {
-            if (!clk_t::Reset()) { clk_t::Power(CLK::State::Off); }
+            clk_t::Reset();
+            clk_t::Power(CLK::State::Off);
         }
     };
 
@@ -76,7 +78,7 @@ namespace MCU::USART
         inline static buffer_t m_rxBuffer{};
         inline static buffer_t m_txBuffer{};
 
-        static void StartTransmitting() noexcept
+        ALWAYS_INLINE static void StartTransmitting() noexcept
         {
             if (!CR1{}.TCIE())
             {
@@ -87,12 +89,12 @@ namespace MCU::USART
                 }
             }
         }
-        static void BlockingTransmit(char const input) noexcept
+        ALWAYS_INLINE static void BlockingTransmit(char const input) noexcept
         {
             while (!SR{}.TC());
             DR() = input;
         }
-        static void TX_Push(char const input) noexcept
+        ALWAYS_INLINE static void TX_Push(char const input) noexcept
         {
             if (m_txBuffer.Push(input))
             {
@@ -100,7 +102,7 @@ namespace MCU::USART
             }
         }
         template <size_t N>
-        static void SendBuffer(std::array<char, N> const & input) noexcept
+        ALWAYS_INLINE static void SendBuffer(std::array<char, N> const & input) noexcept
         {
             for (char c : input) {
                 if (m_txBuffer.IsFull()) { break; }
@@ -109,14 +111,14 @@ namespace MCU::USART
 
             StartTransmitting();
         }
-        static void BlockingSendBuffer(buffer_t & input) noexcept
+        ALWAYS_INLINE static void BlockingSendBuffer(buffer_t & input) noexcept
         {
             while (input.Size())
             {
                 BlockingTransmit(input.Pop().value_or(0));
             }
         }
-        static bool IsTerminator(char const input) noexcept
+        ALWAYS_INLINE static bool IsTerminator(char const input) noexcept
         {
             switch (input)
             {

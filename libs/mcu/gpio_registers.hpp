@@ -42,23 +42,11 @@ namespace MCU::IO
         };
     }
 
-    constexpr static uint32_t GetPortBase(size_t port) noexcept
-    {
-        switch (port)
-        {
-            case 0: return GPIOA_BASE;
-            case 1: return GPIOB_BASE;
-            case 2: return GPIOC_BASE;
-            case 3: return GPIOD_BASE;
-            case 4: return GPIOE_BASE;
-        };
-    }
-
     namespace MemoryMap
     {
         using namespace Settings;
 
-        template <uint8_t PORT, uint32_t ADDR = GetPortBase(PORT) + offsetof(GPIO_TypeDef, CRL)>
+        template <uint8_t PORT, uint32_t ADDR>
         struct CRL : public u32_reg_t<ADDR>
         {
             using reg_t = u32_reg_t<ADDR>;
@@ -224,7 +212,7 @@ namespace MCU::IO
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            void Set() noexcept
+            void Set()
             {
                 if constexpr (PIN == 15) { reg_t::template Get<GPIO_BSRR_BS15>() = true; }
                 if constexpr (PIN == 14) { reg_t::template Get<GPIO_BSRR_BS14>() = true; }
@@ -243,7 +231,7 @@ namespace MCU::IO
                 if constexpr (PIN == 1) { reg_t::template Get<GPIO_BSRR_BS1>() = true; }
                 if constexpr (PIN == 0) { reg_t::template Get<GPIO_BSRR_BS0>() = true; }
             }
-            void Reset() noexcept
+            void Reset()
             {
                 if constexpr (PIN == 15) { reg_t::template Get<GPIO_BSRR_BR15>() = true; }
                 if constexpr (PIN == 14) { reg_t::template Get<GPIO_BSRR_BR14>() = true; }
@@ -275,7 +263,7 @@ namespace MCU::IO
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-            void Reset() noexcept
+            void Reset()
             {
                 if constexpr (PIN == 15) { reg_t::template Get<GPIO_BRR_BR15>() = true; }
                 if constexpr (PIN == 14) { reg_t::template Get<GPIO_BRR_BR14>() = true; }
@@ -302,11 +290,7 @@ namespace MCU::IO
             using reg_t = u32_reg_t<ADDR>;
             using reg_t::reg_t;
 
-        private:
-            auto LCKK() noexcept { return reg_t::template Get<GPIO_LCKR_LCKK>(); }
-
-        public:
-            auto LCK() noexcept
+            auto LCK()
             {
                 if constexpr (PIN == 15) { return reg_t::template Get<GPIO_LCKR_LCK15>(); }
                 if constexpr (PIN == 14) { return reg_t::template Get<GPIO_LCKR_LCK14>(); }
@@ -341,22 +325,34 @@ namespace MCU::IO
                 (void)temp;
                 return (LCKK()) ? true : false;
             }
+            
+        private:
+            auto LCKK() { return reg_t::template Get<GPIO_LCKR_LCKK>(); }
         };
 
         template <uint8_t PORT, uint8_t PIN>
         struct Registers
         {
         private:
-            using CRL_t = CRL<PORT, GetPortBase(PORT) + offsetof(GPIO_TypeDef, CRL)>;
-            using CRH_t = CRH<PORT, GetPortBase(PORT) + offsetof(GPIO_TypeDef, CRH)>;
+            static constexpr uint32_t GetPortBase() noexcept
+            {
+                if constexpr (PORT == 0u) { return GPIOA_BASE; }
+                if constexpr (PORT == 1u) { return GPIOB_BASE; }
+                if constexpr (PORT == 2u) { return GPIOC_BASE; }
+                if constexpr (PORT == 3u) { return GPIOD_BASE; }
+                if constexpr (PORT == 4u) { return GPIOE_BASE; }
+            }
+        
+            using CRL_t = CRL<PORT, GetPortBase() + offsetof(GPIO_TypeDef, CRL)>;
+            using CRH_t = CRH<PORT, GetPortBase() + offsetof(GPIO_TypeDef, CRH)>;
         
         public:
             using CRx_t = CRx< PORT, PIN, std::conditional_t< (PIN < 8U), CRL_t, CRH_t > >;
-            using IDR_t = IDR<PORT, PIN, GetPortBase(PORT) + offsetof(GPIO_TypeDef, IDR)>;
-            using ODR_t = ODR<PORT, PIN, GetPortBase(PORT) + offsetof(GPIO_TypeDef, ODR)>;
-            using BSRR_t = BSRR<PORT, PIN, GetPortBase(PORT) + offsetof(GPIO_TypeDef, BSRR)>;
-            using BRR_t = BRR<PORT, PIN, GetPortBase(PORT) + offsetof(GPIO_TypeDef, BRR)>;
-            using LCKR_t = LCKR<PORT, PIN, GetPortBase(PORT) + offsetof(GPIO_TypeDef, LCKR)>;
+            using IDR_t = IDR<PORT, PIN, GetPortBase() + offsetof(GPIO_TypeDef, IDR)>;
+            using ODR_t = ODR<PORT, PIN, GetPortBase() + offsetof(GPIO_TypeDef, ODR)>;
+            using BSRR_t = BSRR<PORT, PIN, GetPortBase() + offsetof(GPIO_TypeDef, BSRR)>;
+            using BRR_t = BRR<PORT, PIN, GetPortBase() + offsetof(GPIO_TypeDef, BRR)>;
+            using LCKR_t = LCKR<PORT, PIN, GetPortBase() + offsetof(GPIO_TypeDef, LCKR)>;
         };
     }
 }

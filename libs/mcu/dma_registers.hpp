@@ -30,20 +30,6 @@ namespace Peripherals::DMA
         };
     }
 
-    static constexpr uint32_t GetChannelBase(uint8_t channel) noexcept
-    {
-        switch(channel)
-        {
-            case 1: return DMA1_Channel1_BASE;
-            case 2: return DMA1_Channel2_BASE;
-            case 3: return DMA1_Channel3_BASE;
-            case 4: return DMA1_Channel4_BASE;
-            case 5: return DMA1_Channel5_BASE;
-            case 6: return DMA1_Channel6_BASE;
-            case 7: return DMA1_Channel7_BASE;
-        };
-    }
-
     namespace MemoryMap
     {
         using namespace Settings;
@@ -302,12 +288,23 @@ namespace Peripherals::DMA
         template <size_t CH>
         struct Registers
         {
+            static constexpr uint32_t GetChannelBase() noexcept
+            {
+                if constexpr (CH == 1u) { return DMA1_Channel1_BASE; }
+                if constexpr (CH == 2u) { return DMA1_Channel2_BASE; }
+                if constexpr (CH == 3u) { return DMA1_Channel3_BASE; }
+                if constexpr (CH == 4u) { return DMA1_Channel4_BASE; }
+                if constexpr (CH == 5u) { return DMA1_Channel5_BASE; }
+                if constexpr (CH == 6u) { return DMA1_Channel6_BASE; }
+                if constexpr (CH == 7u) { return DMA1_Channel7_BASE; }
+            }
+            
             using ISR_t = ISR<CH, DMA1_BASE + offsetof(DMA_TypeDef, ISR)>;
             using IFCR_t = IFCR<CH, DMA1_BASE + offsetof(DMA_TypeDef, IFCR)>;
-            using CCR_t = CCR<CH, GetChannelBase(CH) + offsetof(DMA_Channel_TypeDef, CCR)>;
-            using CNDTR_t = CNDTR<CH, GetChannelBase(CH) + offsetof(DMA_Channel_TypeDef, CNDTR)>;
-            using CPAR_t = CPAR<CH, GetChannelBase(CH) + offsetof(DMA_Channel_TypeDef, CPAR)>;
-            using CMAR_t = CMAR<CH, GetChannelBase(CH) + offsetof(DMA_Channel_TypeDef, CMAR)>;
+            using CCR_t = CCR<CH, GetChannelBase() + offsetof(DMA_Channel_TypeDef, CCR)>;
+            using CNDTR_t = CNDTR<CH, GetChannelBase() + offsetof(DMA_Channel_TypeDef, CNDTR)>;
+            using CPAR_t = CPAR<CH, GetChannelBase() + offsetof(DMA_Channel_TypeDef, CPAR)>;
+            using CMAR_t = CMAR<CH, GetChannelBase() + offsetof(DMA_Channel_TypeDef, CMAR)>;
         };
     }
 }

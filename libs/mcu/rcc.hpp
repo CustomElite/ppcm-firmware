@@ -55,7 +55,7 @@ namespace MCU::CLK
     template <Peripheral M>
     struct Control
     {
-        static void Power(const State input = State::On) noexcept
+        ALWAYS_INLINE static constexpr void Power(const State input = State::On) noexcept
         {
             using namespace Common::Tools;
             using namespace MemoryMap;
@@ -91,7 +91,7 @@ namespace MCU::CLK
             if constexpr(M == Peripheral::AHB_FLASH)  { AHBENR{}.FLITFEN()   = EnumValue(input); }
             if constexpr(M == Peripheral::AHB_SRAM)   { AHBENR{}.SRAMEN()    = EnumValue(input); }
         }
-        static bool Reset() noexcept
+        ALWAYS_INLINE static constexpr bool Reset() noexcept
         {
             using namespace MemoryMap;
 
@@ -121,119 +121,6 @@ namespace MCU::CLK
             else if constexpr(M == Peripheral::APB1_PWR)    { APB1RSTR{}.PWRRST()    = true; APB1RSTR{}.PWRRST()    = false; return true; }
             else if constexpr(M == Peripheral::APB1_USB)    { APB1RSTR{}.USBRST()    = true; APB1RSTR{}.USBRST()    = false; return true; }
             else { return false; }
-        }
-    };
-
-    template <typename Properties>
-    class SystemBus : public Properties
-    {
-    public:
-        using Properties::CoreClockSrc;
-        using Properties::AHB_Prescale;
-        using Properties::APB2_Prescale;
-        using Properties::APB1_Prescale;
-        using Properties::PLL_ClockSrc;
-        using Properties::PLL_Multi;
-
-        SystemBus() noexcept
-        {
-            using namespace MemoryMap;
-
-            LL_FLASH_SetLatency(LL_FLASH_LATENCY_0); // TODO: Add flash registers
-            while(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_0) {} // TODO: 
-
-            switch (CoreClockSrc)
-            {
-                case SystemClockSource::HSI: CR{}.EnableHSI(); break;
-                case SystemClockSource::HSE: CR{}.EnableHSE(); break;
-                case SystemClockSource::PLL: configure_pll(); break;
-            }
-            
-            CFGR{}.SetBusPrescalers(AHB_Prescale, APB2_Prescale, APB1_Prescale);
-            CFGR{}.SetSystemClock(CoreClockSrc);
-
-            SystemCoreClock = CoreClock();
-        }
-        static constexpr uint32_t CoreClock() noexcept
-        {
-            switch (CoreClockSrc)
-            {
-                case SystemClockSource::HSI: return ::System::HSI_Clock;
-                case SystemClockSource::HSE: return ::System::HSE_Clock;
-                case SystemClockSource::PLL: return PLL_Clock();
-            }
-        }
-        static constexpr uint32_t AHB_Clock() noexcept
-        {
-            return (CoreClock() >> hclk_prescaler());
-        }
-        static constexpr uint32_t APB2_Clock() noexcept
-        {
-            return (AHB_Clock() >> pclk_prescaler(APB2_Prescale));
-        }
-        static constexpr uint32_t APB1_Clock() noexcept
-        {
-            return (AHB_Clock() >> pclk_prescaler(APB1_Prescale));
-        }
-        static constexpr uint32_t PLL_Clock() noexcept
-        {
-            return (pll_source_freq() * (Common::Tools::EnumValue(PLL_Multi) + 2u));
-        }
-
-    private:
-        static void configure_pll() noexcept
-        {
-            using namespace MemoryMap;
-
-            CR{}.DisablePLL();
-
-            if constexpr(PLL_ClockSrc == PLL_ClockSource::HSI_DIV2)
-            { 
-                CR{}.EnableHSI();
-            }
-            else { 
-                CR{}.EnableHSE();
-            }
-
-            CFGR{}.SetPLL_Source(PLL_ClockSrc);
-            CFGR{}.SetPLL_Multiplier(PLL_Multi);
-
-            CR{}.EnablePLL();
-        }
-        static constexpr uint32_t hclk_prescaler() noexcept
-        {
-            switch (AHB_Prescale)
-            {
-                case HCLK_Prescaler::SYSCLK_DIV1: return 0u;
-                case HCLK_Prescaler::SYSCLK_DIV2: return 1u;
-                case HCLK_Prescaler::SYSCLK_DIV4: return 2u;
-                case HCLK_Prescaler::SYSCLK_DIV8: return 3u;
-                case HCLK_Prescaler::SYSCLK_DIV16: return 4u;
-                case HCLK_Prescaler::SYSCLK_DIV64: return 6u;
-                case HCLK_Prescaler::SYSCLK_DIV128: return 7u;
-                case HCLK_Prescaler::SYSCLK_DIV256: return 8u;
-                case HCLK_Prescaler::SYSCLK_DIV512: return 9u;
-            }
-        }
-        static constexpr uint32_t pclk_prescaler(PCLK_Prescaler const input) noexcept
-        {
-            switch(input)
-            {
-                case PCLK_Prescaler::HCLK_DIV1: return 0u;
-                case PCLK_Prescaler::HCLK_DIV2: return 1u;
-                case PCLK_Prescaler::HCLK_DIV4: return 2u;
-                case PCLK_Prescaler::HCLK_DIV8: return 3u;
-                case PCLK_Prescaler::HCLK_DIV16: return 4u;
-            }
-        }
-        static constexpr uint32_t pll_source_freq() noexcept
-        {
-            switch (PLL_ClockSrc)
-            {
-                case PLL_ClockSource::HSI_DIV2: return (::System::HSI_Clock >> 1u);
-                case PLL_ClockSource::HSE: return ::System::HSE_Clock;
-                case PLL_ClockSource::HSE_DIV2: return (::System::HSE_Clock >> 1u);
-            }
         }
     };
 }

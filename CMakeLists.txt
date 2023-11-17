@@ -91,8 +91,8 @@ target_compile_options(${CMAKE_PROJECT_NAME} PRIVATE
         -Wno-register
         -ftemplate-backtrace-limit=0>
     $<$<CONFIG:Debug>: -g -O0 -g3 -ggdb>
-    $<$<CONFIG:Release>: -Os>
-    $<$<CONFIG:RelWithDebInfo>: -g -O2 -g2 -ggdb>)
+    $<$<CONFIG:Release>: -O3>
+    $<$<CONFIG:RelWithDebInfo>: -g -O1 -g3 -ggdb>)
 
 # Linker options
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE

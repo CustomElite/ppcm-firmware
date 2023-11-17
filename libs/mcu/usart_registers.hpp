@@ -42,15 +42,6 @@ namespace MCU::USART
         };
     }
 
-    static constexpr uint32_t GetPeriphBase(uint8_t periph_id) noexcept
-    {
-        switch(periph_id)
-        {
-            case 1: return USART1_BASE;
-            case 2: return USART2_BASE;
-            case 3: return USART3_BASE;
-        }
-    }
     namespace MemoryMap
     {
         using namespace Settings;
@@ -301,13 +292,20 @@ namespace MCU::USART
         template <uint8_t ID>
         struct Registers
         {
-            using SR_t = SR<ID, GetPeriphBase(ID) + offsetof(USART_TypeDef, SR)>;
-            using DR_t = DR<ID, GetPeriphBase(ID) + offsetof(USART_TypeDef, DR)>;
-            using BRR_t = BRR<ID, GetPeriphBase(ID) + offsetof(USART_TypeDef, BRR)>;
-            using CR1_t = CR1<ID, GetPeriphBase(ID) + offsetof(USART_TypeDef, CR1)>;
-            using CR2_t = CR2<ID, GetPeriphBase(ID) + offsetof(USART_TypeDef, CR2)>;
-            using CR3_t = CR3<ID, GetPeriphBase(ID) + offsetof(USART_TypeDef, CR3)>;
-            using GTPR_t = GTPR<ID, GetPeriphBase(ID) + offsetof(USART_TypeDef, GTPR)>;
+            static constexpr uint32_t GetPeriphBase() noexcept
+            {
+                if constexpr (ID == 1u) { return USART1_BASE; }
+                if constexpr (ID == 2u) { return USART2_BASE; }
+                if constexpr (ID == 3u) { return USART3_BASE; }
+            }
+            
+            using SR_t = SR<ID, GetPeriphBase() + offsetof(USART_TypeDef, SR)>;
+            using DR_t = DR<ID, GetPeriphBase() + offsetof(USART_TypeDef, DR)>;
+            using BRR_t = BRR<ID, GetPeriphBase() + offsetof(USART_TypeDef, BRR)>;
+            using CR1_t = CR1<ID, GetPeriphBase() + offsetof(USART_TypeDef, CR1)>;
+            using CR2_t = CR2<ID, GetPeriphBase() + offsetof(USART_TypeDef, CR2)>;
+            using CR3_t = CR3<ID, GetPeriphBase() + offsetof(USART_TypeDef, CR3)>;
+            using GTPR_t = GTPR<ID, GetPeriphBase() + offsetof(USART_TypeDef, GTPR)>;
         };
     }
 }

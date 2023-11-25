@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+
 namespace Common
 {
     template <typename T>
@@ -16,12 +18,11 @@ namespace Common
         }
 
     private:
-        inline static unsigned s_count = 0;
+        inline static size_t s_count = 0;
 
         static bool Construct() noexcept
         {
-            bool const retval = (s_count == 0);
-            ++s_count;
+            bool const retval = (s_count++ == 0);
             return retval;
         }
         static bool Destruct() noexcept

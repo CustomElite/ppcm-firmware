@@ -6,18 +6,19 @@
 
 namespace Common::Containers 
 {
-    template <typename T, std::size_t N, bool Blind = false>
+    template <typename T, size_t N, bool Blind = false>
     class FIFO
     {
     public: 
         using value_type = T;
 
-        static constexpr std::size_t Capacity = N;
+        static constexpr size_t Capacity = N;
+        static constexpr bool IsBlind = Blind;
 
         constexpr FIFO() noexcept = default;
 
         template <typename... Args>
-        constexpr std::size_t Push(Args && ... args) noexcept
+        constexpr size_t Push(Args && ... args) noexcept
         {
             return (SinglePush(std::forward<Args>(args)) + ... );
         }
@@ -60,12 +61,12 @@ namespace Common::Containers
         }
 
         [[nodiscard]]
-        constexpr std::size_t Size() const noexcept
+        constexpr size_t Size() const noexcept
         {
             return (m_head - m_tail);
         }
         [[nodiscard]]
-        constexpr std::size_t Available() const noexcept
+        constexpr size_t Available() const noexcept
         {
             return (N - Size());
         }
@@ -81,20 +82,20 @@ namespace Common::Containers
         }
 
         [[nodiscard]]
-        value_type & operator[](std::size_t index) noexcept
+        value_type & operator[](size_t index) noexcept
         {
             return m_data[Index(index + m_tail)];
         }
         [[nodiscard]]
-        value_type const & operator[](std::size_t index) const noexcept
+        value_type const & operator[](size_t index) const noexcept
         {
             return m_data[Index(index + m_tail)];
         }
 
     protected:
-        std::size_t m_head{ 0 };
-        std::size_t m_tail{ 0 };
-        std::array<T, N> m_data;
+        size_t m_head{ 0 };
+        size_t m_tail{ 0 };
+        std::array<T, N> m_data{ 0 };
 
         constexpr void Wrap() noexcept
         {
@@ -115,11 +116,11 @@ namespace Common::Containers
             Wrap();
         }
         [[nodiscard]]
-        constexpr std::size_t Index(std::size_t input) noexcept
+        constexpr size_t Index(size_t input) noexcept
         {
             return (input % N);
         }
-        constexpr std::size_t SinglePush(T const & input) noexcept
+        constexpr size_t SinglePush(T const & input) noexcept
         {
             if (IsFull())
             {

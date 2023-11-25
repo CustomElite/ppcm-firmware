@@ -7,6 +7,8 @@
 
 #include "stm32f1xx.h"
 
+#include <utility>
+
 namespace MCU::ISR
 {
     enum class InterruptSource
@@ -68,59 +70,29 @@ namespace MCU::ISR
         eUSBWakeUp = USBWakeUp_IRQn      
     };
 
-    template <InterruptSource SRC>
-    constexpr bool IsEnablable() noexcept
+    template <InterruptSource TSource>
+    static constexpr bool IsEnablable() noexcept
     {
-        return (Common::Tools::EnumValue(SRC) >= 0);
+        return (Common::Tools::EnumValue(TSource) >= 0);
     }
 
-#if 0
-    template <InterruptSource SRC>
+    template <InterruptSource TSource>
     class InterruptDelegator
     {
     public:
-        using delegate_t = etl::delegate<void(void)>;
+        using void_function_t = void(*)();
 
-        ALWAYS_INLINE static void Call() noexcept
-        {
-            m_delegate.call_if();
-        }
-
-    protected:
-        ALWAYS_INLINE static bool Register(delegate_t const &isr_delegate) noexcept
-        {
-            if (m_delegate.is_valid()) return false;
-
-            m_delegate = isr_delegate;
-            return true;
-        }
-        ALWAYS_INLINE static void Unregister() noexcept
-        {
-            m_delegate.clear();
-        }
-        ALWAYS_INLINE static bool IsValid() noexcept
-        {
-            return m_delegate.is_valid();
-        }
-    private:
-        inline static delegate_t m_delegate{};
-    };
-#endif
-    template <InterruptSource SRC>
-    class InterruptDelegator
-    {
-    public:
-        using function_t = void(*)();
-
-        ALWAYS_INLINE static void Call() noexcept
+        ALWAYS_INLINE 
+        static void Call() noexcept
         {
             if (s_callback) { s_callback(); }
         }
 
     protected:
-        ALWAYS_INLINE static bool Register(function_t const &callback) noexcept
+        ALWAYS_INLINE 
+        static bool Register(void_function_t && callback) noexcept
         {
-            function_t * const volatile ptr = &s_callback;
+            void_function_t * const volatile ptr = &s_callback;
 
             if (*ptr == nullptr)
             {
@@ -130,57 +102,61 @@ namespace MCU::ISR
 
             return false;
         }
-        ALWAYS_INLINE static bool Unregister() noexcept
+        ALWAYS_INLINE 
+        static bool Unregister() noexcept
         {
             s_callback = nullptr;
             return true;
         }
-        ALWAYS_INLINE static bool Registered() noexcept
+        ALWAYS_INLINE 
+        static bool Registered() noexcept
         {
             return (s_callback != nullptr);
         }
 
     private:
-        inline static function_t s_callback{nullptr};
+        inline static void_function_t s_callback{ nullptr };
     };
     
-    template <typename MODULE, InterruptSource SRC, std::size_t PRI = 5u>
-    class Interrupt : InterruptDelegator<SRC>
+    template <class TPeriph, InterruptSource TSource, unsigned TPriority = 5u>
+    class Interrupt : public InterruptDelegator<TSource>
     {
     public:
-        using base_t = InterruptDelegator<SRC>;
-        using isr_function_t = typename base_t::function_t;
+        using base_t = InterruptDelegator<TSource>;
+        using void_function_t = typename base_t::void_function_t;
 
-        ALWAYS_INLINE Interrupt(isr_function_t const &isr) noexcept
+        ALWAYS_INLINE 
+        Interrupt(void_function_t && isr) noexcept
         {
-            if (base_t::Register(isr))
+            if (base_t::Register(std::forward<void_function_t>(isr)))
             {
-                if constexpr (IsEnablable<SRC>())
+                if constexpr (IsEnablable<TSource>())
                 {
                     __NVIC_SetPriority
                     (
-                        (IRQn_Type)SRC, 
+                        (IRQn_Type)TSource, 
                         NVIC_EncodePriority
                         (
                             __NVIC_GetPriorityGrouping(), 
-                            Common::Math::Minimum(PRI, 15u), 
+                            Common::Math::Minimum(TPriority, 15u), 
                             0
                         )
                     );
-                    __NVIC_EnableIRQ((IRQn_Type)SRC);
+                    __NVIC_EnableIRQ((IRQn_Type)TSource);
                 }
             }
         }
-        ALWAYS_INLINE Interrupt() noexcept
-            : Interrupt{ MODULE::Interrupt } 
+        ALWAYS_INLINE 
+        Interrupt() noexcept : 
+            Interrupt{ TPeriph::Interrupt } 
         {}
-        ALWAYS_INLINE ~Interrupt() noexcept
+        ALWAYS_INLINE 
+        ~Interrupt() noexcept
         {
             if (base_t::Registered())
             {
+                if constexpr (IsEnablable<TSource>()) { __NVIC_DisableIRQ((IRQn_Type)TSource); }
                 base_t::Unregister();
-                if constexpr (IsEnablable<SRC>())
-                    __NVIC_DisableIRQ((IRQn_Type)SRC);
             }
         }
     };

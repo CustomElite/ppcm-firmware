@@ -1,13 +1,10 @@
-#include "main.h"
-
-#include "mcu.h"
-#include "serial.hpp"
-#include "system.hpp"
 #include "constants.hpp"
-#include "pin_defs.hpp"
+
+#include "system.hpp"
 
 #include "printf/printf.h"
 
+using namespace System;
 
 uint16_t watch{0};
 uint32_t timer{0};
@@ -27,7 +24,7 @@ int main()
 
     while (1) 
     {
-        if ((ppcm.Tick() - timer) >= 5_sec)
+        if ((ppcm.Ticks() - timer) >= 5_sec)
         {
             /*switch(led_state)
             {
@@ -37,7 +34,7 @@ int main()
             }*/
             ppcm.StatusGood();
             ++watch;
-            timer = ppcm.Tick();
+            timer = ppcm.Ticks();
         }
     }
     

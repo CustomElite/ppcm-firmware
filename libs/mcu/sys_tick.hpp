@@ -2,34 +2,31 @@
 
 #include "interrupt.hpp"
 
+#include <cstdint>
+
 namespace MCU::SYSTICK
 {
-    class Interface
+    class Module
     {
-    private:
-        using interrupt_t = ISR::Interrupt<Interface, ISR::InterruptSource::eSysTick, 1u>;
-
-        inline static uint64_t volatile m_count = 0;
-
     public:
-        Interface(uint32_t const frequency) noexcept
+        Module(uint32_t const core_clock, uint32_t const tick_frequency = 1'000u) noexcept
         {
-            SysTick->LOAD = static_cast<uint32_t>((SystemCoreClock / frequency) - 1ull);
+            SysTick->LOAD = (uint32_t)((core_clock / tick_frequency) - 1ul);
             SysTick->VAL = 0ul;
             SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
         }
         static uint64_t Increment() noexcept
         { 
-            return ++m_count; 
+            return ++s_counter; 
         }
-        static uint64_t Tick() noexcept 
+        static uint64_t Ticks() noexcept 
         { 
-            return m_count; 
+            return s_counter; 
         }
         static void Wait(uint32_t const ticks) noexcept
         {
-            uint64_t const volatile end = Tick() + ticks;
-            while (Tick() < end);
+            uint64_t const volatile end = Ticks() + ticks;
+            while (Ticks() < end);
         }
         static void Interrupt() noexcept
         {
@@ -37,7 +34,11 @@ namespace MCU::SYSTICK
         }
     
     private:
-        interrupt_t const m_interrupt{};
+        using interrupt_t = ISR::Interrupt<Module, ISR::InterruptSource::eSysTick, 1u>;
+
+        interrupt_t const m_interrupt;
+
+        inline static uint64_t volatile s_counter = 0;
     };
 
 }

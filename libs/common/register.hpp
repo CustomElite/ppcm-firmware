@@ -7,51 +7,62 @@
 
 namespace Common 
 {
-    template <typename T, uint32_t ADDR, T BITMSK>
-    class Bitset
+    template <typename T, uint32_t ADDR, T BITMASK>
+    class Bitfield
     {
     public:
-        ALWAYS_INLINE void Clear() noexcept
+        using type = T;
+        using pointer = T volatile * const;
+
+        ALWAYS_INLINE 
+        void Clear() noexcept
         {
-            (*s_addr) &= s_nMask;
+            (*Address) &= nBitmask;
         }
-        ALWAYS_INLINE void Set(T input) noexcept
+        ALWAYS_INLINE 
+        void Set(type const input) noexcept
         {
-            (*s_addr) = (*s_addr & s_nMask) | apply_mask(input);
+            (*Address) = (*Address & nBitmask) | apply_mask(input);
         }
-        ALWAYS_INLINE void Toggle(T input) noexcept
+        ALWAYS_INLINE 
+        void Toggle(type const input) noexcept
         {
-            (*s_addr) ^= apply_mask(input);
+            (*Address) ^= apply_mask(input);
         }
-        ALWAYS_INLINE T Read() const noexcept
+        ALWAYS_INLINE 
+        type Read() const noexcept
         {
-            return (((*s_addr) & s_mask) >> s_pos);
+            return (((*Address) & Bitmask) >> BitPosition);
         }
-        ALWAYS_INLINE Bitset & operator = (T input) noexcept
+        ALWAYS_INLINE 
+        Bitfield & operator = (type const rhs) noexcept
         {
-            Set(input);
+            Set(rhs);
             return *this;
         }
-        ALWAYS_INLINE operator T() const noexcept
+        ALWAYS_INLINE 
+        operator type() const noexcept
         {
             return Read();
         }
-        ALWAYS_INLINE Bitset & operator |= (T input) noexcept
+        ALWAYS_INLINE 
+        Bitfield & operator |= (type rhs) noexcept
         {
-            (*s_addr) |= apply_mask(input);
+            (*Address) |= apply_mask(rhs);
             return *this;
         }
-        ALWAYS_INLINE Bitset & operator &= (T input) noexcept
+        ALWAYS_INLINE 
+        Bitfield & operator &= (type rhs) noexcept
         {
-            (*s_addr) &= (apply_mask(input) | s_nMask);
+            (*Address) &= (apply_mask(rhs) | nBitmask);
             return *this;
         }
 
     private:
-        ALWAYS_INLINE static constexpr T get_position() noexcept
+        static constexpr auto get_position() noexcept
         {
-            T start{ 0 };
-            T mask{ BITMSK };
+            type start{ 0 };
+            type mask{ BITMASK };
 
             while((mask & 1) == 0)
             {
@@ -61,208 +72,248 @@ namespace Common
 
             return start;
         }
-        ALWAYS_INLINE static auto apply_mask(T input) noexcept
+        static auto apply_mask(type input) noexcept
         {
-            return ((input << s_pos) & s_mask);
+            return ((input << BitPosition) & Bitmask);
         }
-    
-        using ptr_t = T volatile * const;
 
-        static constexpr T s_mask = BITMSK;
-        static constexpr T s_nMask = (~s_mask);
-        static constexpr T s_pos = get_position();
+        static constexpr type Bitmask = BITMASK;
+        static constexpr type nBitmask = (~Bitmask);
+        static constexpr type BitPosition = get_position();
 
-        inline static ptr_t s_addr = reinterpret_cast<ptr_t>(ADDR);
+        inline static pointer Address = reinterpret_cast<pointer>(ADDR);
     };
 
     template <typename T, uint32_t ADDR>
     struct RawRegister
     {
-        using ptr_t = T volatile * const;
+        using type = T;
+        using pointer = T volatile * const;
 
         constexpr RawRegister() = default;
 
-        inline static ptr_t s_addr = reinterpret_cast<ptr_t>(ADDR);
+        inline static pointer s_addr = reinterpret_cast<pointer>(ADDR);
 
-        ALWAYS_INLINE void Write(T input) noexcept
+        ALWAYS_INLINE 
+        void Write(type input) noexcept
         {
             (*s_addr) = input;
         }
-        ALWAYS_INLINE T Read() const noexcept
+        ALWAYS_INLINE 
+        type Read() const noexcept
         {
             return *s_addr;
         }
-        ALWAYS_INLINE RawRegister & Access() noexcept
+        ALWAYS_INLINE 
+        RawRegister & Access() noexcept
         {
             return *this;
         }
-        template <T MSK>
-        ALWAYS_INLINE Bitset<T, ADDR, MSK> Get() const noexcept
+        template <type MASK>
+        ALWAYS_INLINE 
+        Bitfield<T, ADDR, MASK> GetBitfield() const noexcept
         {
             return {};
         }
-        ALWAYS_INLINE RawRegister& operator = (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator = (type const & input) noexcept
         {
             (*s_addr) = input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator %= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator %= (type const & input) noexcept
         {
             (*s_addr) %= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator ^= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator ^= (type const & input) noexcept
         {
             (*s_addr) ^= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator *= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator *= (type const & input) noexcept
         {
             (*s_addr) *= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator /= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator /= (type const & input) noexcept
         {
             (*s_addr) /= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator += (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator += (type const & input) noexcept
         {
             (*s_addr) += input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator -= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator -= (type const & input) noexcept
         {
             (*s_addr) -= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator |= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator |= (type const & input) noexcept
         {
             (*s_addr) |= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator &= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator &= (type const & input) noexcept
         {
             (*s_addr) &= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator <<= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator <<= (type const & input) noexcept
         {
             (*s_addr) <<= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator >>= (const T& input) noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator >>= (type const & input) noexcept
         {
             (*s_addr) >>= input;
             return *this;
         }
-        ALWAYS_INLINE RawRegister& operator--() noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator--() noexcept
         {
             --(*s_addr);
             return *this;
         }
-        ALWAYS_INLINE T operator--(int) noexcept
+        ALWAYS_INLINE 
+        type operator--(int) noexcept
         {
             auto retval = (*s_addr);
             --(*s_addr);
             return retval;
         }
-        ALWAYS_INLINE RawRegister& operator++() noexcept
+        ALWAYS_INLINE 
+        RawRegister & operator++() noexcept
         {
             ++(*s_addr);
             return *this;
         }
-        ALWAYS_INLINE T operator++(int) noexcept
+        ALWAYS_INLINE 
+        type operator++(int) noexcept
         {
             auto retval = (*s_addr);
             ++(*s_addr);
             return retval;
         }
-        ALWAYS_INLINE T operator ~ () const noexcept
+        ALWAYS_INLINE 
+        type operator ~ () const noexcept
         {
             return ~(*s_addr);
         }
-        ALWAYS_INLINE T operator - () const noexcept
+        ALWAYS_INLINE 
+        type operator - () const noexcept
         {
             return -(*s_addr);
         }
-        ALWAYS_INLINE T operator + () const noexcept
+        ALWAYS_INLINE 
+        type operator + () const noexcept
         {
             return +(*s_addr);
         }
-        ALWAYS_INLINE T operator ^ (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator ^ (type const & input) const noexcept
         {
             return (*s_addr) ^ input;
         }
-        ALWAYS_INLINE T operator % (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator % (type const & input) const noexcept
         {
             return (*s_addr) % input;
         }
-        ALWAYS_INLINE T operator & (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator & (type const & input) const noexcept
         {
             return (*s_addr) & input;
         }
-        ALWAYS_INLINE T operator | (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator | (type const & input) const noexcept
         {
             return (*s_addr) | input;
         }
-        ALWAYS_INLINE T operator + (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator + (type const & input) const noexcept
         {
             return (*s_addr) + input;
         }
-        ALWAYS_INLINE T operator - (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator - (type const & input) const noexcept
         {
             return (*s_addr) - input;
         }
-        ALWAYS_INLINE T operator * (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator * (type const & input) const noexcept
         {
             return (*s_addr) * input;
         }
-        ALWAYS_INLINE T operator / (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator / (type const & input) const noexcept
         {
             return (*s_addr) / input;
         }
-        ALWAYS_INLINE T operator << (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator << (type const & input) const noexcept
         {
             return (*s_addr) << input;
         }
-        ALWAYS_INLINE T operator >> (const T& input) const noexcept
+        ALWAYS_INLINE 
+        type operator >> (type const & input) const noexcept
         {
             return (*s_addr) >> input;
         }
-        ALWAYS_INLINE bool operator ! () const noexcept
+        ALWAYS_INLINE 
+        bool operator ! () const noexcept
         {
             return !(*s_addr);
         }
-        ALWAYS_INLINE bool operator && (const T& input) const noexcept
+        ALWAYS_INLINE 
+        bool operator && (type const & input) const noexcept
         {
             return (*s_addr) && input;
         }
-        ALWAYS_INLINE bool operator || (const T& input) const noexcept
+        ALWAYS_INLINE 
+        bool operator || (type const & input) const noexcept
         {
             return (*s_addr) || input;
         }
-        ALWAYS_INLINE bool operator == (const T& input) const noexcept
+        ALWAYS_INLINE 
+        bool operator == (type const & input) const noexcept
         {
             return (*s_addr) == input;
         }
-        ALWAYS_INLINE bool operator != (const T& input) const noexcept
+        ALWAYS_INLINE 
+        bool operator != (type const & input) const noexcept
         {
             return (*s_addr) != input;
         }
-        ALWAYS_INLINE bool operator < (const T& input) const noexcept
+        ALWAYS_INLINE 
+        bool operator < (type const & input) const noexcept
         {
             return (*s_addr) < input;
         }
-        ALWAYS_INLINE bool operator <= (const T& input) const noexcept
+        ALWAYS_INLINE 
+        bool operator <= (type const & input) const noexcept
         {
             return (*s_addr) <= input;
         }
-        ALWAYS_INLINE bool operator > (const T& input) const noexcept
+        ALWAYS_INLINE 
+        bool operator > (type const & input) const noexcept
         {
             return (*s_addr) > input;
         }
-        ALWAYS_INLINE bool operator >= (const T& input) const noexcept
+        ALWAYS_INLINE 
+        bool operator >= (type const & input) const noexcept
         {
             return (*s_addr) >= input;
         }

@@ -1,20 +1,30 @@
 #pragma once
 
-#include "mcu/bus.hpp"
+#include "constants.hpp"
+
+#include "mcu/rcc.hpp"
+#include "mcu/gpio.hpp"
+#include "mcu/spi.hpp"
+#include "mcu/usart.hpp"
+#include "mcu/sys_tick.hpp"
 
 namespace System 
 {
-    struct BusProperties
-    {
-        static constexpr auto CoreClockSrc = MCU::CLK::SystemClockSource::HSE;
-        static constexpr auto AHB_Prescale = MCU::CLK::HCLK_Prescaler::SYSCLK_DIV1;
-        static constexpr auto APB2_Prescale = MCU::CLK::PCLK_Prescaler::HCLK_DIV4;
-        static constexpr auto APB1_Prescale = MCU::CLK::PCLK_Prescaler::HCLK_DIV4;
-        static constexpr auto PLL_ClockSrc = MCU::CLK::PLL_ClockSource::HSE;
-        static constexpr auto PLL_Multi = MCU::CLK::PLL_Multiplier::X2;
-        static constexpr auto HSI_Clock = System::HSI_Clock;
-        static constexpr auto HSE_Clock = System::HSE_Clock;
-    };
+    namespace { using namespace MCU; }
 
-    using SystemBus_t = MCU::BUS::SystemBus<BusProperties>;
+    using BusProperties = CLK::Properties< CLK::SystemClockSource::HSE, 
+                                           CLK::HCLK_Prescaler::DIV1, 
+                                           CLK::PCLK2_Prescaler::DIV4, 
+                                           CLK::PCLK1_Prescaler::DIV4,
+                                           CLK::PLL_ClockSource::HSE, 
+                                           CLK::PLL_Multiplier::X2, 
+                                           Constants::HSI_Clock, 
+                                           Constants::HSE_Clock >;
+
+    using SystemBus_t = CLK::SystemBus<BusProperties>;
+    using SystemTick_t = SYSTICK::Module;
+
+    using USART1_Config = USART::Configuration<USART::Peripheral::USART_1, Pins::USART_TX, Pins::USART_RX, SystemBus_t::APB2_ClockFreq(), 19200_u32>;
+
+    using SPI1_Config = SPI::Configuration<SPI::Peripheral::SPI_1, Pins::SPI1_SCLK, Pins::SPI1_MOSI, IO::NoPin>;
 }

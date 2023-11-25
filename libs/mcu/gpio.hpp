@@ -2,7 +2,6 @@
 
 #include "macros.h"
 
-#include "mcu/rcc.hpp"
 #include "rcc.hpp"
 #include "gpio_registers.hpp"
 
@@ -10,8 +9,6 @@
 
 namespace MCU::IO 
 {
-    using namespace Settings;
-
     enum class Port : uint8_t
     {
         A = 0u,
@@ -27,110 +24,117 @@ namespace MCU::IO
         High = true
     };
 
-    template <Port P>
-    class PowerKernal
+    namespace {
+        template <Port tPort>
+        constexpr auto GetClockID() noexcept
+        {
+            if constexpr (tPort == Port::A) { return CLK::ClockID::APB2_GPIOA; }
+            if constexpr (tPort == Port::B) { return CLK::ClockID::APB2_GPIOB; }
+            if constexpr (tPort == Port::C) { return CLK::ClockID::APB2_GPIOC; }
+            if constexpr (tPort == Port::D) { return CLK::ClockID::APB2_GPIOD; }
+            if constexpr (tPort == Port::E) { return CLK::ClockID::APB2_GPIOE; }
+        }
+    }
+
+    template <Port tPort, size_t tPin>
+    class Module
     {
-    private:
-        static constexpr auto GetClockModule() noexcept
-        {
-            if constexpr (P == Port::A) { return CLK::Peripheral::APB2_GPIOA; }
-            if constexpr (P == Port::B) { return CLK::Peripheral::APB2_GPIOB; }
-            if constexpr (P == Port::C) { return CLK::Peripheral::APB2_GPIOC; }
-            if constexpr (P == Port::D) { return CLK::Peripheral::APB2_GPIOD; }
-            if constexpr (P == Port::E) { return CLK::Peripheral::APB2_GPIOE; }
-        }
-
-        using clk_t = CLK::Control<GetClockModule()>;
-
-    public:
-        static void Construct() noexcept
-        {
-            clk_t::Power(CLK::State::On);
-        }
-        static void Destruct() noexcept
-        {
-            if (!clk_t::Reset()) { clk_t::Power(CLK::State::Off); }
-        }
-    };
-
-    template <Port PORT, size_t PIN>
-    class Interface
-    {
-        static_assert((PIN >= 0) && (PIN <= 15u), "Pin number does not exist. Only pins 0-15 are valid.");
+        static_assert((tPin >= 0) && (tPin <= 15u), "Pin number does not exist. Only pins 0-15 are valid.");
 
     public:
         template <typename... Args>
-        ALWAYS_INLINE Interface(Args... args) noexcept
+        ALWAYS_INLINE 
+        Module(Args... args) noexcept
         {
             Configure(args ...);
         }
         template <typename T>
-        ALWAYS_INLINE Interface & operator = (T input) noexcept
+        ALWAYS_INLINE 
+        Module & operator = (T input) noexcept
         {
             Set(input);
             return *this;
         }
-        ALWAYS_INLINE Interface & operator = (bool input) noexcept
+        ALWAYS_INLINE 
+        Module & operator = (bool const input) noexcept
         {
             Set((State)input);
             return *this;
         }
-        ALWAYS_INLINE static void Write(bool input) noexcept
+        ALWAYS_INLINE 
+        static void Write(bool const input) noexcept
         {
             Set((State)input);
         }
-        ALWAYS_INLINE static void Write(State input) noexcept
+        ALWAYS_INLINE 
+        static void Write(State const input) noexcept
         {
             Set(input);
         }
-        ALWAYS_INLINE static void Toggle() noexcept
+        ALWAYS_INLINE 
+        static void Toggle() noexcept
         {
-
+            
         }
-        template <typename... Args>
-        ALWAYS_INLINE static void Configure(Args... args) noexcept
+        template <typename... tArgs>
+        ALWAYS_INLINE 
+        static void Configure(tArgs... args) noexcept
         {
             ( Set(args), ... );
         }
 
     private:
-        using REGS = MemoryMap::Registers<Tools::EnumValue(PORT), PIN>;
-        using CRx = typename REGS::CRx_t;
-        using IDR = typename REGS::IDR_t;
-        using ODR = typename REGS::ODR_t;
-        using BSRR = typename REGS::BSRR_t;
-        using BRR = typename REGS::BRR_t;
-        using LCKR = typename REGS::LCKR_t;
+        using regs_t = Registers<Common::Tools::EnumValue(tPort), tPin>;
+        using CRx = typename regs_t::CRx;
+        using ODR = typename regs_t::ODR;
+        using BSRR = typename regs_t::BSRR;
 
-        Common::RunOnce<PowerKernal<PORT>> m_kernal{};
+        using clk_t = CLK::Kernal<GetClockID<tPort>()>;
 
-        ALWAYS_INLINE static void Set(Input input) noexcept
+        ALWAYS_INLINE 
+        static void Set(Input input) noexcept
         {
-            CRx{}.ConfigureMode(input);
+            CRx{}.SetMode(input);
         }
-        ALWAYS_INLINE static void Set(Output input) noexcept
+        ALWAYS_INLINE 
+        static void Set(Output input) noexcept
         {
-            CRx{}.ConfigureMode(input);
+            CRx{}.SetMode(input);
         }
-        ALWAYS_INLINE static void Set(Alternate input) noexcept
+        ALWAYS_INLINE 
+        static void Set(Alternate input) noexcept
         {
-            CRx{}.ConfigureMode(input);
+            CRx{}.SetMode(input);
         }
-        ALWAYS_INLINE static void Set(OutputSpeed input) noexcept
+        ALWAYS_INLINE 
+        static void Set(OutputSpeed input) noexcept
         {
             CRx{}.MODE() = Common::Tools::EnumValue(input);
         }
-        ALWAYS_INLINE static void Set(PullResistor input) noexcept
+        ALWAYS_INLINE 
+        static void Set(PullResistor input) noexcept
         {
             ODR{}.OD() = Common::Tools::EnumValue(input);
         }
-        ALWAYS_INLINE static void Set(bool input) noexcept
+        ALWAYS_INLINE 
+        static void Set(bool input) noexcept
         {
             BSRR{} = input;
         }
-        ALWAYS_INLINE static void Set(State input) noexcept
+        ALWAYS_INLINE 
+        static void Set(State input) noexcept
         {
             Set(input == State::High);
         }
+
+    private:
+        clk_t const m_kernal{};
+    };
+
+    struct NoPin
+    {
+        NoPin(...) {}
+        operator bool() const { return false; }
+        void operator =(bool const) {}
     };
 }

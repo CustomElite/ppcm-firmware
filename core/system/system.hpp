@@ -1,90 +1,85 @@
 #pragma once
 
-#include "serial.hpp"
-#include "pin_defs.hpp"
+#include "types.hpp"
 #include "constants.hpp"
+#include "serial.hpp"
 
 #include "mcu/gpio.hpp"
-#include "mcu/bus.hpp"
+#include "mcu/rcc.hpp"
 #include "mcu/sys_tick.hpp"
 
 #include <cstdint>
 
 namespace System
 {
-    using namespace MCU;
-
-    class SystemCore
+    class Core
     {
     public:
-        constexpr SystemCore() noexcept = default;
+        constexpr Core() noexcept = default;
 
-        static uint64_t Tick() noexcept
+        static uint64_t Ticks() noexcept
         {
-            return m_system.sysTick.Tick();
+            return s_core.sysTick.Ticks();
         }
         static void Wait(uint32_t const msecs) noexcept
         {
-            m_system.sysTick.Wait(msecs);
-        }
-        static auto & Serial() noexcept
-        {
-            static auto serial
-            {
-                System::Serial<SystemCore>
-                (
-                    &StatusGood,
-                    &StatusBad
-                )
-            };
-
-            return serial;
+            SystemTick_t::Wait(msecs);
         }
         static void StatusGood() noexcept
         {
             for (uint8_t i = 0; i < 2u; ++i)
             {
-                m_system.statusLED = IO::State::Low;
-                m_system.sysTick.Wait(0.15_sec);
-                m_system.statusLED = IO::State::High;
-                m_system.sysTick.Wait(0.15_sec);
+                s_core.statusLED = MCU::IO::State::Low;
+                s_core.sysTick.Wait(0.15_sec);
+                s_core.statusLED = MCU::IO::State::High;
+                s_core.sysTick.Wait(0.15_sec);
             }
         }
         static void StatusBad() noexcept
         {
             for (uint8_t i = 0; i < 2u; ++i)
             {
-                m_system.statusLED = IO::State::Low;
-                m_system.sysTick.Wait(1_sec);
-                m_system.statusLED = IO::State::High;
-                m_system.sysTick.Wait(0.15_sec);
+                s_core.statusLED = MCU::IO::State::Low;
+                s_core.sysTick.Wait(1_sec);
+                s_core.statusLED = MCU::IO::State::High;
+                s_core.sysTick.Wait(0.15_sec);
             }
+        }
+        static auto & Serial() noexcept
+        {
+            static auto serial
+            {
+                System::Serial<Core>
+                (
+                    &StatusGood,
+                    &StatusBad
+                )
+            };
+            return serial;
         }
 
     private:
-        using SystemTick_t = SYSTICK::Interface;
-
-        struct Components
+        struct CoreModules
         {
             SystemBus_t sysBus;
             SystemTick_t sysTick;
-            STATUS_LED statusLED;
+            Pins::STATUS_LED statusLED;
 
-            Components() noexcept :
+            CoreModules() noexcept :
                 sysBus{},
-                sysTick{ 1000_u32 },
-                statusLED{ IO::Output::PushPull, IO::State::High }
+                sysTick{ SystemBus_t::CoreClockFreq(), 1_KHz },
+                statusLED{ MCU::IO::Output::PushPull, MCU::IO::State::High }
             {}
         };
 
-        inline static Components m_system{};
+        inline static CoreModules s_core{};
     };
 
-    inline SystemCore CreateSystem() noexcept
+    inline Core CreateSystem() noexcept
     {
-        SystemCore core;
-        auto & serial{ core.Serial() };
+        Core sys_core;
+        auto & serial{ sys_core.Serial() };
         ((void)serial);
-        return core;
+        return sys_core;
     }
 }

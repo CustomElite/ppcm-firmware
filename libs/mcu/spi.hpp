@@ -41,80 +41,78 @@ namespace MCU::SPI
 
     template 
     <
-        Peripheral tPeriph,
-        typename tSCLK,
-        typename tMOSI,
-        typename tMISO,
-        BitOrder tBitOrder = BitOrder::MSB_First,
-        DataWidth tWidth = DataWidth::_16bit,
-        ClockPhase tClkPhase = ClockPhase::LeadingEdge,
-        ClockPolarity tClkPolarity = ClockPolarity::Low,
-        ClockPrescaler tClkDiv = ClockPrescaler::Div8,
-        DataDirection tDirection = DataDirection::FullDuplex,
-        Mode tMode = Mode::Master
+        Peripheral tPeriph
+        , typename tSCLK
+        , typename tMOSI
+        , typename tMISO
+        , BitOrder tBitOrder = BitOrder::MSB_First
+        , DataWidth tWidth = DataWidth::_16bit
+        , ClockPhase tClkPhase = ClockPhase::LeadingEdge
+        , ClockPolarity tClkPolarity = ClockPolarity::Low
+        , ClockPrescaler tClkDiv = ClockPrescaler::Div8
+        , DataDirection tDirection = DataDirection::FullDuplex
+        , Mode tMode = Mode::Master
     >
-    struct Configuration : tSCLK, tMOSI, tMISO
+    struct Properties
     {
-        using sclk_t = tSCLK;
-        using mosi_t = tMOSI;
-        using miso_t = tMISO;
+        using SCLK_t = tSCLK;
+        using MOSI_t = tMOSI;
+        using MISO_t = tMISO;
 
-        using regs_t = MemoryMap::Registers<Common::Tools::EnumValue(tPeriph)>;
-
-        Configuration() noexcept :
-            sclk_t{ IO::Alternate::PushPull, IO::OutputSpeed::_50MHz },
-            mosi_t{ IO::Alternate::PushPull, IO::OutputSpeed::_50MHz },
-            miso_t{ IO::Input::Floating }
-        {
-            using CR1 = typename regs_t::CR1_t;
-
-            CR1{}.SetBitOrder(tBitOrder);
-            CR1{}.SetDataWidth(tWidth);
-            CR1{}.SetClockPhase(tClkPhase);
-            CR1{}.SetClockPolarity(tClkPolarity);
-            CR1{}.SetClockPrescaler(tClkDiv);
-            CR1{}.SetDataDirection(tDirection);
-            CR1{}.SetMode(tMode);
-        }
-
-        static constexpr auto Peripheral = tPeriph;
-
-    private:
-        using clk_t = CLK::Kernal<GetClockID<tPeriph>()>;
-
-        clk_t const m_kernal{};
+        static constexpr auto s_Peripheral = tPeriph;
+        static constexpr auto s_BitOrder = tBitOrder;
+        static constexpr auto s_DataWidth = tWidth;
+        static constexpr auto s_Phase = tClkPhase;
+        static constexpr auto s_Polarity = tClkPolarity;
+        static constexpr auto s_ClockDiv = tClkDiv;
+        static constexpr auto s_DataDirection = tDirection;
+        static constexpr auto s_Mode = tMode;
     };
 
-    template <typename tConfig, typename tCallback>
-    class Module : private tConfig
+    template <typename tProperties, typename tCallback>
+    class Module : private tProperties::SCLK_t, tProperties::MOSI_t, tProperties::MISO_t
     {
     public:
         template <typename CB>
         Module(CB && callback) noexcept :
-            m_callback{ std::forward<CB>(callback) }
+            SCLK_t{ IO::Alternate::PushPull, IO::OutputSpeed::_50MHz }
+            , MOSI_t{ IO::Alternate::PushPull, IO::OutputSpeed::_50MHz }
+            , MISO_t{ IO::Input::Floating }
+            , m_callback{ std::forward<CB>(callback) }
         {
-            CR1{}.Enable();
+            Regs_t{}.EnablePeriph();
         }
-        Module(tConfig, tCallback && callback) noexcept :
+        Module(tProperties, tCallback && callback) noexcept :
             Module{ std::forward<tCallback>(callback) }
         {}
+        ~Module()
+        {
+            Regs_t{}.DisablePeriph();
+        }
+
     private:
-        using tConfig::Peripheral;
-        using regs_t = typename tConfig::regs_t;
+        using   tProperties::s_Peripheral
+              , tProperties::s_BitOrder
+              , tProperties::s_DataWidth
+              , tProperties::s_Phase
+              , tProperties::s_Polarity
+              , tProperties::s_ClockDiv
+              , tProperties::s_DataDirection
+              , tProperties::s_Mode;
 
-        using CR1 = typename regs_t::CR1_t;
-        using CR2 = typename regs_t::CR2_t;
-        using SR = typename regs_t::SR_t;
-        using DR = typename regs_t::DR_t;
-        using CRCPR = typename regs_t::CRCPR_t;
-        using RXCRCR = typename regs_t::RXCRCR_t;
-        using TXCRCR = typename regs_t::TXCRCR_t;
+        using typename tProperties::SCLK_t;
+        using typename tProperties::MOSI_t;
+        using typename tProperties::MISO_t;
 
+        using Regs_t = Registers<Common::Tools::EnumValue(s_Peripheral)>;
+
+        using clk_t = CLK::Kernal<GetClockID<s_Peripheral>()>;
         using callback_t = Common::StaticLambda<tCallback>;
-        using isr_t = ISR::Interrupt<Module, GetInterruptSource<Peripheral>()>;
+        using isr_t = ISR::Interrupt<Module, GetInterruptSource<s_Peripheral>()>;
 
     private:
-        callback_t m_callback;
-        isr_t m_isr;
+        clk_t const m_clk;
+        callback_t const m_callback;
+        isr_t const m_isr;
     };
 }

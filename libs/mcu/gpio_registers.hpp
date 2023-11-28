@@ -12,6 +12,11 @@ namespace MCU::IO
 {
     inline namespace Settings
     {
+        enum class State : bool
+        {
+            Low = false,
+            High = true
+        };
         enum class Input : uint8_t
         {
             Analog = 0b00,
@@ -115,22 +120,6 @@ namespace MCU::IO
         {
             auto MODE() { return CR_REG::template MODEx<tPin>(); }
             auto CNF() { return CR_REG::template CNFx<tPin>(); }
-
-            void SetMode(Input input) noexcept
-            {
-                MODE() = false;
-                CNF() = Common::Tools::EnumValue(input);
-            }
-            void SetMode(Output input) noexcept
-            {
-                MODE() = true;
-                CNF() = Common::Tools::EnumValue(input);
-            }
-            void SetMode(Alternate input) noexcept
-            {
-                MODE() = true;
-                CNF() = Common::Tools::EnumValue(input);
-            }
         };
 
         template <size_t tPort, size_t tPin, uint32_t TAddress>
@@ -189,11 +178,6 @@ namespace MCU::IO
             ODR & operator = (bool const rhs) noexcept
             {
                 OD() = rhs;
-            }
-
-            void SetPullResistor(PullResistor const & input) noexcept
-            {
-                OD() = Common::Tools::EnumValue(input);
             }
         };
 
@@ -300,24 +284,6 @@ namespace MCU::IO
                 if constexpr (tPin == 1) { return reg_t::template GetBitfield<GPIO_LCKR_LCK1>(); }
                 if constexpr (tPin == 0) { return reg_t::template GetBitfield<GPIO_LCKR_LCK0>(); }
             }
-            bool IsLocked() noexcept
-            {
-                return LCKK();
-            }
-            bool Lock() noexcept
-            {
-                if (IsLocked()) { return false; }
-
-                // Lock key write sequence
-                LCKK() = 1u;
-                LCKK() = 0u;
-                LCKK() = 1u;
-                auto temp = LCKK();
-                (void)temp;
-                return (LCKK()) ? true : false;
-            }
-            
-        private:
             auto LCKK() { return reg_t::template GetBitfield<GPIO_LCKR_LCKK>(); }
         };
     }
@@ -345,5 +311,60 @@ namespace MCU::IO
         using BSRR = MemoryMap::BSRR<tPort, tPin, GetPortBase() + offsetof(GPIO_TypeDef, BSRR)>;
         using BRR = MemoryMap::BRR<tPort, tPin, GetPortBase() + offsetof(GPIO_TypeDef, BRR)>;
         using LCKR = MemoryMap::LCKR<tPort, tPin, GetPortBase() + offsetof(GPIO_TypeDef, LCKR)>;
+
+        ALWAYS_INLINE 
+        static void Set(Input const input) noexcept
+        {
+            CRx{}.MODE() = false;
+            CRx{}.CNF() = Common::Tools::EnumValue(input);
+        }
+        ALWAYS_INLINE 
+        static void Set(Output const input) noexcept
+        {
+            CRx{}.MODE() = true;
+            CRx{}.CNF() = Common::Tools::EnumValue(input);
+        }
+        ALWAYS_INLINE 
+        static void Set(Alternate const input) noexcept
+        {
+            CRx{}.MODE() = true;
+            CRx{}.CNF() = Common::Tools::EnumValue(input);
+        }
+        ALWAYS_INLINE 
+        static void Set(OutputSpeed const input) noexcept
+        {
+            CRx{}.MODE() = Common::Tools::EnumValue(input);
+        }
+        ALWAYS_INLINE 
+        static void Set(PullResistor const input) noexcept
+        {
+            ODR{}.OD() = Common::Tools::EnumValue(input);
+        }
+        ALWAYS_INLINE 
+        static void Set(bool input) noexcept
+        {
+            BSRR{} = input;
+        }
+        ALWAYS_INLINE 
+        static void Set(State input) noexcept
+        {
+            BSRR{} = Common::Tools::EnumValue(input);
+        }
+        static bool IsLocked() noexcept
+        {
+            return LCKR{}.LCKK();
+        }
+        static bool Lock() noexcept
+        {
+            if (IsLocked()) { return false; }
+            // Lock key write sequence
+            LCKR{}.LCKK() = 1u;
+            LCKR{}.LCKK() = 0u;
+            LCKR{}.LCKK() = 1u;
+
+            while (LCKR{}.LCKK());
+
+            return (LCKR{}.LCKK()) ? true : false;
+        }
     };
 }

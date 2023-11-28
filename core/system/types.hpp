@@ -24,7 +24,7 @@ namespace System
     using SystemBus_t = CLK::SystemBus<BusProperties>;
     using SystemTick_t = SYSTICK::Module;
 
-    using USART1_Config = USART::Configuration<USART::Peripheral::USART_1, Pins::USART_TX, Pins::USART_RX, SystemBus_t::APB2_ClockFreq(), 19200_u32>;
+    using SerialProperties = USART::Properties<USART::Peripheral::USART_1, Pins::USART_TX, Pins::USART_RX, SystemBus_t::APB2_ClockFreq(), 19200_u32>;
 
-    using SPI1_Config = SPI::Configuration<SPI::Peripheral::SPI_1, Pins::SPI1_SCLK, Pins::SPI1_MOSI, IO::NoPin>;
+    using ExADC_Properties = SPI::Properties<SPI::Peripheral::SPI_1, Pins::SPI1_SCLK, Pins::SPI1_MOSI, IO::NoPin>;
 }

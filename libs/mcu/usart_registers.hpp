@@ -59,7 +59,6 @@ namespace MCU::USART
             using reg_t = u32_reg_t<tAddress>;
             using reg_t::reg_t;
 
-            
             auto CTS() { return reg_t::template GetBitfield<USART_SR_CTS>(); } // CTS flag
             auto LBD() { return reg_t::template GetBitfield<USART_SR_LBD>(); } // LIN break detection flag
             auto TXE() { return reg_t::template GetBitfield<USART_SR_TXE>(); } // Transmit data register empty
@@ -99,8 +98,6 @@ namespace MCU::USART
    
             auto DIV_Mantissa() { return reg_t::template GetBitfield<USART_BRR_DIV_Mantissa>(); } // Mantissa of USARTDIV
             auto DIV_Fraction() { return reg_t::template GetBitfield<USART_BRR_DIV_Fraction>(); } // Fraction of USARTDIV
-
-            
         };
 
         // Control register 1
@@ -198,6 +195,37 @@ namespace MCU::USART
             if constexpr (tPeriph == 2u) { return USART2_BASE; }
             if constexpr (tPeriph == 3u) { return USART3_BASE; }
         }
+        ALWAYS_INLINE
+        static void Set(DataDirection const input) noexcept
+        {
+            uint32_t tmp{ Common::Tools::EnumValue(input) };
+            CR1{}.TE() = (tmp & 0b01);
+            CR1{}.RE() = ((tmp >> 1u) & 0b01);
+        }
+        ALWAYS_INLINE
+        static void Set(DataWidth const input) noexcept
+        {
+            CR1{}.M() = Common::Tools::EnumValue(input);
+        }
+        ALWAYS_INLINE
+        static void Set(Parity const input) noexcept
+        {
+            uint32_t tmp{ Common::Tools::EnumValue(input) };
+            CR1{}.PCE() = (tmp & 0b01);
+            CR1{}.PS() = (tmp >> 1u) & 0b01;
+        }
+        ALWAYS_INLINE
+        static void Set(StopBits const input) noexcept
+        {
+            CR2{}.STOP() = Common::Tools::EnumValue(input);
+        }
+        ALWAYS_INLINE
+        static void Set(FlowControl const input) noexcept
+        {
+            uint32_t tmp{ Common::Tools::EnumValue(input) };
+            CR3{}.CTSE() = (tmp & 0b01);
+            CR3{}.RTSE() = ((tmp >> 1u) & 0b01);
+        }
     
     public:
         using SR = MemoryMap::SR<BaseAddress() + offsetof(USART_TypeDef, SR)>;
@@ -207,5 +235,22 @@ namespace MCU::USART
         using CR2 = MemoryMap::CR2<BaseAddress() + offsetof(USART_TypeDef, CR2)>;
         using CR3 = MemoryMap::CR3<BaseAddress() + offsetof(USART_TypeDef, CR3)>;
         using GTPR = MemoryMap::GTPR<BaseAddress() + offsetof(USART_TypeDef, GTPR)>;
+
+        template <typename... tArgs>
+        ALWAYS_INLINE
+        static void Configure(tArgs... args) noexcept
+        {
+            ( Set(args), ... );
+        }
+        ALWAYS_INLINE
+        static void SetBaudRate(uint32_t const periph_clock, uint32_t const baud_rate) noexcept
+        {
+            uint32_t div_x100 = ((periph_clock * 25u) / (4u * baud_rate));
+            uint32_t div_mant = (div_x100 / 100u);
+            uint32_t div_frac = ((((div_x100 - (div_mant * 100u)) * 16u) + 50u) / 100u);
+
+            BRR{}.DIV_Mantissa() = (uint16_t)(div_mant & 0xFFF);
+            BRR{}.DIV_Fraction() = (uint16_t)(div_frac & 0xF);
+        }
     };
 }

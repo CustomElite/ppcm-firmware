@@ -2,102 +2,110 @@
 
 #include <array>
 #include <cstddef>
+#include <iterator>
 #include <optional>
+#include <type_traits>
 
 namespace Common::Containers 
 {
-    template <typename T, size_t N, bool Blind = false>
+    template <typename T, size_t N, bool Circular = false>
     class FIFO
     {
-    public: 
-        using value_type = T;
+    public:
+        using element_type = T;
+        using value_type = std::remove_cv_t<T>;
 
-        static constexpr size_t Capacity = N;
-        static constexpr bool IsBlind = Blind;
+        using pointer = T*;
+        using const_pointer = T const *;
+
+        using reference = T&;
+        using const_reference = T const &;
 
         constexpr FIFO() noexcept = default;
+        constexpr FIFO(element_type const initial_value) noexcept
+            : m_data{ initial_value }
+        {}
 
-        template <typename... Args>
-        constexpr size_t Push(Args && ... args) noexcept
+        template <typename... tArgs>
+        constexpr size_t push(tArgs && ... args) noexcept
         {
-            return (SinglePush(std::forward<Args>(args)) + ... );
+            return (push_impl(std::forward<tArgs>(args)) + ... );
         }
-
         [[nodiscard]]
-        constexpr std::optional<T> Pop() noexcept
+        constexpr std::optional<value_type> pop() noexcept
         {
-            if (IsEmpty()) { return {}; }
+            if (empty()) { return {}; }
 
-            T retval = Front();
-            IncrementTail();
+            value_type retval = front();
+            increment_tail();
             return retval;
         }
-
-        constexpr void Clear() noexcept
+        constexpr void clear() noexcept
         {
             m_head = m_tail = 0;
         }
-
         [[nodiscard]]
-        constexpr value_type & Front() noexcept
+        constexpr reference front() noexcept
         {
-            return m_data[Index(m_tail)];
+            return m_data[index(m_tail)];
         }
         [[nodiscard]]
-        constexpr value_type const & Front() const noexcept
+        constexpr const_reference front() const noexcept
         {
-            return m_data[Index(m_tail)];
-        }
-
-        [[nodiscard]]
-        constexpr value_type & Back() noexcept
-        {
-            return m_data[Index(m_head)];
+            return m_data[index(m_tail)];
         }
         [[nodiscard]]
-        constexpr value_type const & Back() const noexcept
+        constexpr reference back() noexcept
         {
-            return m_data[Index(m_head)];
+            return m_data[index(m_head)];
         }
-
         [[nodiscard]]
-        constexpr size_t Size() const noexcept
+        constexpr const_reference back() const noexcept
+        {
+            return m_data[index(m_head)];
+        }
+        [[nodiscard]]
+        constexpr pointer data() noexcept
+        {
+            return m_data.data();
+        }
+        [[nodiscard]]
+        constexpr size_t size() const noexcept
+        {
+            return N;
+        }
+        [[nodiscard]]
+        constexpr size_t available() const noexcept
         {
             return (m_head - m_tail);
         }
         [[nodiscard]]
-        constexpr size_t Available() const noexcept
+        constexpr bool empty() const noexcept
         {
-            return (N - Size());
+            return (available() == 0);
         }
         [[nodiscard]]
-        constexpr bool IsEmpty() const noexcept
+        constexpr bool full() const noexcept
         {
-            return (Size() == 0);
+            return (available() == N);
         }
         [[nodiscard]]
-        constexpr bool IsFull() const noexcept
+        constexpr operator bool() noexcept
         {
-            return (Size() == N);
-        }
-
-        [[nodiscard]]
-        value_type & operator[](size_t index) noexcept
-        {
-            return m_data[Index(index + m_tail)];
+            return !empty();
         }
         [[nodiscard]]
-        value_type const & operator[](size_t index) const noexcept
+        reference operator[](size_t const idx) noexcept
         {
-            return m_data[Index(index + m_tail)];
+            return m_data[index(idx + m_tail)];
         }
 
     protected:
         size_t m_head{ 0 };
         size_t m_tail{ 0 };
-        std::array<T, N> m_data{ 0 };
+        std::array<T, N> m_data{};
 
-        constexpr void Wrap() noexcept
+        constexpr void wrap() noexcept
         {
             while ((m_head >= N) && (m_tail >= N))
             {
@@ -105,32 +113,32 @@ namespace Common::Containers
                 m_tail -= N;
             }
         }
-        constexpr void IncrementHead() noexcept
+        constexpr void increment_head() noexcept
         {
             ++m_head;
-            Wrap();
+            wrap();
         }
-        constexpr void IncrementTail() noexcept
+        constexpr void increment_tail() noexcept
         {
             ++m_tail;
-            Wrap();
+            wrap();
         }
         [[nodiscard]]
-        constexpr size_t Index(size_t input) noexcept
+        constexpr size_t index(size_t const input) noexcept
         {
             return (input % N);
         }
-        constexpr size_t SinglePush(T const & input) noexcept
+        constexpr size_t push_impl(T const & input) noexcept
         {
-            if (IsFull())
+            if (full())
             {
-                if constexpr (Blind == false) { return 0; }
+                if constexpr (Circular == false) { return 0; }
 
-                IncrementTail();
+                increment_tail();
             }
 
-            Back() = input;
-            IncrementHead();
+            back() = input;
+            increment_head();
             return 1u;
         }
     };

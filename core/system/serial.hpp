@@ -11,7 +11,7 @@ namespace System
     {
         return MCU::USART::Module
         {
-            USART1_Config{},
+            SerialProperties{},
             [ g{ std::forward<GoodFunc>(good) }, b{ std::forward<BadFunc>(bad) } ](bool const q)
             {
                 if (q)

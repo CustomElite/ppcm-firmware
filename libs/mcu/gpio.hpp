@@ -18,11 +18,7 @@ namespace MCU::IO
         E
     };
 
-    enum class State : bool
-    {
-        Low = false,
-        High = true
-    };
+    
 
     namespace {
         template <Port tPort>
@@ -43,90 +39,48 @@ namespace MCU::IO
 
     public:
         template <typename... Args>
-        ALWAYS_INLINE 
         Module(Args... args) noexcept
         {
-            Configure(args ...);
+            Set(args...);
         }
         template <typename T>
-        ALWAYS_INLINE 
         Module & operator = (T input) noexcept
         {
-            Set(input);
+            regs_t::Set(input);
             return *this;
         }
-        ALWAYS_INLINE 
         Module & operator = (bool const input) noexcept
         {
-            Set((State)input);
+            regs_t::Set((State)input);
             return *this;
         }
-        ALWAYS_INLINE 
-        static void Write(bool const input) noexcept
-        {
-            Set((State)input);
-        }
-        ALWAYS_INLINE 
-        static void Write(State const input) noexcept
-        {
-            Set(input);
-        }
-        ALWAYS_INLINE 
         static void Toggle() noexcept
         {
             
         }
         template <typename... tArgs>
-        ALWAYS_INLINE 
-        static void Configure(tArgs... args) noexcept
+        static void Set(tArgs... args) noexcept
         {
-            ( Set(args), ... );
+            ( regs_t::Set(args), ... );
         }
-
+        static bool Lock() noexcept
+        {
+            return regs_t::Lock();
+        }
+        static bool IsLocked() noexcept
+        {
+            return regs_t::IsLocked();
+        }
+        
     private:
         using regs_t = Registers<Common::Tools::EnumValue(tPort), tPin>;
         using CRx = typename regs_t::CRx;
+        using IDR = typename regs_t::IDR;
         using ODR = typename regs_t::ODR;
         using BSRR = typename regs_t::BSRR;
+        using LCKR = typename regs_t::LCKR;
 
         using clk_t = CLK::Kernal<GetClockID<tPort>()>;
-
-        ALWAYS_INLINE 
-        static void Set(Input input) noexcept
-        {
-            CRx{}.SetMode(input);
-        }
-        ALWAYS_INLINE 
-        static void Set(Output input) noexcept
-        {
-            CRx{}.SetMode(input);
-        }
-        ALWAYS_INLINE 
-        static void Set(Alternate input) noexcept
-        {
-            CRx{}.SetMode(input);
-        }
-        ALWAYS_INLINE 
-        static void Set(OutputSpeed input) noexcept
-        {
-            CRx{}.MODE() = Common::Tools::EnumValue(input);
-        }
-        ALWAYS_INLINE 
-        static void Set(PullResistor input) noexcept
-        {
-            ODR{}.OD() = Common::Tools::EnumValue(input);
-        }
-        ALWAYS_INLINE 
-        static void Set(bool input) noexcept
-        {
-            BSRR{} = input;
-        }
-        ALWAYS_INLINE 
-        static void Set(State input) noexcept
-        {
-            Set(input == State::High);
-        }
-
     private:
         clk_t const m_kernal{};
     };

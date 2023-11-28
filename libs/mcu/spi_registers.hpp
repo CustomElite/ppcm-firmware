@@ -5,9 +5,12 @@
 
 #include "stm32f103xb.h"
 #include "stm32f1xx.h"
+#include <type_traits>
 
 namespace MCU::SPI
 {
+    namespace { using namespace Common::Tools; }
+
     inline namespace Settings
     {
         enum class Mode : bool
@@ -63,8 +66,6 @@ namespace MCU::SPI
 
     namespace MemoryMap
     {
-        namespace { using namespace Common::Tools; }
-
         // Control register 1
         template <uint32_t tAddress>
         struct CR1 : public u16_reg_t<tAddress>
@@ -87,20 +88,7 @@ namespace MCU::SPI
             auto CPOL() { return reg_t::template GetBitfield<SPI_CR1_CPOL>(); } // Clock polarity
             auto CPHA() { return reg_t::template GetBitfield<SPI_CR1_CPHA>(); } // Clock phase
 
-            void Enable() noexcept
-            {
-                if (!SPE().Read()) { SPE() = true; }
-            }
-            void Disable() noexcept
-            {
-                if (SPE().Read()) { SPE() = false; }
-            }
-            template <typename... tArgs>
-            void Configure(tArgs... args) noexcept
-            {
-                ( Set(args), ... );
-            }
-            DataDirection GetDataDirection() const noexcept
+            auto GetDataDirection() const noexcept
             {
                 uint8_t retval{0};
                 retval |= (BIDIMODE().Read() << 2u);
@@ -109,61 +97,29 @@ namespace MCU::SPI
 
                 return DataDirection{ retval };
             }
-            DataWidth GetDataWidth() noexcept
+            auto GetDataWidth() const noexcept
             {
                 return DataWidth{ DFF().Read() };
             }
-            BitOrder GetBitOrder() const noexcept
+            auto GetBitOrder() const noexcept
             {
                 return BitOrder{ LSBFIRST().Read() };
             }
-            ClockPrescaler GetClockPrescaler() const noexcept
+            auto GetClockPrescaler() const noexcept
             {
                 return ClockPrescaler{ BR().Read() };
             }
-            Mode GetMode() noexcept
+            auto GetMode() const noexcept
             {
                 return Mode{ MSTR().Read() };
             }
-            ClockPhase GetClockPhase() const noexcept
+            auto GetClockPhase() const noexcept
             {
                 return ClockPhase{ CPHA().Read() };
             }
-            ClockPolarity GetClockPolarity() const noexcept
+            auto GetClockPolarity() const noexcept
             {
                 return ClockPolarity{ CPOL().Read() };
-            }
-
-        private:
-            void Set(DataDirection const input) noexcept
-            {
-                BIDIMODE() = ((EnumValue(input) >> 2u) & 1u);
-                BIDIOE() = ((EnumValue(input) >> 1u) & 1u);
-                RXONLY() = ((EnumValue(input) >> 0u) & 1u);
-            }
-            void Set(DataWidth const input) noexcept
-            {
-                DFF() = EnumValue(input);
-            }
-            void Set(BitOrder const input) noexcept
-            {
-                LSBFIRST() = EnumValue(input);
-            }
-            void Set(ClockPrescaler const input) noexcept
-            {
-                BR() = EnumValue(input);
-            }
-            void Set(Mode const input) noexcept
-            {
-                MSTR() = EnumValue(input);
-            }
-            void Set(ClockPhase const input) noexcept
-            {
-                CPHA() = EnumValue(input);
-            }
-            void Set(ClockPolarity const input) noexcept
-            {
-                CPOL() = EnumValue(input);
             }
         };
 
@@ -239,23 +195,78 @@ namespace MCU::SPI
             using reg_t::reg_t;
             using reg_t::operator=;
         };
-
-        template <size_t tPeriph>
-        struct Registers
-        {
-            static constexpr uint32_t GetPeriphBase() noexcept
-            {
-                if constexpr (tPeriph == 1u) { return SPI1_BASE; }
-                if constexpr (tPeriph == 2u) { return SPI2_BASE; }
-            }
-
-            using CR1_t = CR1<GetPeriphBase() + offsetof(SPI_TypeDef, CR1)>;
-            using CR2_t = CR2<GetPeriphBase() + offsetof(SPI_TypeDef, CR2)>;
-            using SR_t = SR<GetPeriphBase() + offsetof(SPI_TypeDef, SR)>;
-            using DR_t = DR<GetPeriphBase() + offsetof(SPI_TypeDef, DR)>;
-            using CRCPR_t = CRCPR<GetPeriphBase() + offsetof(SPI_TypeDef, CRCPR)>;
-            using RXCRCR_t = RXCRCR<GetPeriphBase() + offsetof(SPI_TypeDef, RXCRCR)>;
-            using TXCRCR_t = TXCRCR<GetPeriphBase() + offsetof(SPI_TypeDef, TXCRCR)>;
-        };
     }
+
+    template <size_t tPeriph>
+    struct Registers
+    {
+    private:
+        static constexpr uint32_t GetBaseAddress() noexcept
+        {
+            if constexpr (tPeriph == 1u) { return SPI1_BASE; }
+            if constexpr (tPeriph == 2u) { return SPI2_BASE; }
+        }
+
+        void Set(DataDirection const input) noexcept
+        {
+            CR1().BIDIMODE() = ((EnumValue(input) >> 2u) & 1u);
+            CR1().BIDIOE() = ((EnumValue(input) >> 1u) & 1u);
+            CR1().RXONLY() = ((EnumValue(input) >> 0u) & 1u);
+        }
+        void Set(DataWidth const input) noexcept
+        {
+            CR1().DFF() = EnumValue(input);
+        }
+        void Set(BitOrder const input) noexcept
+        {
+            CR1().LSBFIRST() = EnumValue(input);
+        }
+        void Set(ClockPrescaler const input) noexcept
+        {
+            CR1().BR() = EnumValue(input);
+        }
+        void Set(Mode const input) noexcept
+        {
+            CR1().MSTR() = EnumValue(input);
+        }
+        void Set(ClockPhase const input) noexcept
+        {
+            CR1().CPHA() = EnumValue(input);
+        }
+        void Set(ClockPolarity const input) noexcept
+        {
+            CR1().CPOL() = EnumValue(input);
+        }
+
+    public:
+        using CR1_t = MemoryMap::CR1<GetBaseAddress() + offsetof(SPI_TypeDef, CR1)>;
+        using CR2_t = MemoryMap::CR2<GetBaseAddress() + offsetof(SPI_TypeDef, CR2)>;
+        using SR_t = MemoryMap::SR<GetBaseAddress() + offsetof(SPI_TypeDef, SR)>;
+        using DR_t = MemoryMap::DR<GetBaseAddress() + offsetof(SPI_TypeDef, DR)>;
+        using CRCPR_t = MemoryMap::CRCPR<GetBaseAddress() + offsetof(SPI_TypeDef, CRCPR)>;
+        using RXCRCR_t = MemoryMap::RXCRCR<GetBaseAddress() + offsetof(SPI_TypeDef, RXCRCR)>;
+        using TXCRCR_t = MemoryMap::TXCRCR<GetBaseAddress() + offsetof(SPI_TypeDef, TXCRCR)>;
+
+        CR1_t CR1() { return {}; }
+        CR2_t CR2() { return {}; }
+        SR_t SR() { return {}; }
+        DR_t DR() { return {}; }
+        CRCPR_t CRCPR() { return {}; }
+        RXCRCR_t RXCRCR() { return {}; }
+        TXCRCR_t TXCRCR() { return {}; }
+
+        void EnablePeriph() noexcept
+        {
+            if (!CR1().SPE().Read()) { CR1().SPE() = true; }
+        }
+        void DisablePeriph() noexcept
+        {
+            if (CR1().SPE().Read()) { CR1().SPE() = false; }
+        }
+        template <typename... tArgs>
+        void Configure(tArgs... args) noexcept
+        {
+            ( Set(args), ... );
+        }
+    };
 }

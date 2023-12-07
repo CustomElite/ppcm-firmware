@@ -1,156 +1,190 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
-#include <cstddef>
 #include <iterator>
-#include <memory>
-#include <optional>
 #include <type_traits>
 
-namespace Common::Containers 
+namespace Common::Containers
 {
-    constexpr size_t dynamic_extent = std::integral_constant<size_t, size_t(-1)>::value;
-    
-    template <typename T, size_t Extent = dynamic_extent>
+    static constexpr size_t dynamic_extent = size_t(-1);
+
+    template <typename T, size_t tExtent = dynamic_extent>
     class Span
     {
     public:
-        using element_type = T;
-        using value_type = std::remove_cv_t<T>;
-        using size_type = size_t;
+        using value_type = T;
 
         using pointer = T*;
-        using const_pointer = T const *;
+        using const_pointer = T const*;
 
         using reference = T&;
-        using const_reference = T const &;
+        using const_reference = T const&;
 
         using iterator = T*;
+        using const_iterator = T const*;
         using reverse_iterator = std::reverse_iterator<iterator>;
+        using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+
+        using size_type = size_t;
+        using difference_type = ptrdiff_t;
+
+        static constexpr auto extent{ tExtent };
 
         constexpr Span() noexcept = default;
-        constexpr Span(Span const &) noexcept = default;
-        constexpr Span(Span &&) noexcept = default;
+        constexpr Span(Span const&) noexcept = default;
+        constexpr Span(Span&&) noexcept = default;
 
-        template <typename tIterator>
-        constexpr explicit Span(tIterator const begin, tIterator const) noexcept
-            : m_begin{ std::addressof(*begin) }
-        {}
         template <typename tIterator, typename tSize>
         constexpr explicit Span(tIterator const begin, tSize const) noexcept
             : m_begin{ std::addressof(*begin) }
         {}
+        template <typename tIterator>
+        constexpr explicit Span(tIterator const begin, tIterator const) noexcept
+            : m_begin{ std::addressof(*begin) }
+        {}
         template <size_t N>
-        constexpr Span(element_type(&begin)[N]) noexcept
+        constexpr Span(value_type(&begin)[N]) noexcept
             : m_begin{ begin }
         {}
-        template <typename tContainer, typename = std::enable_if_t<!std::is_pointer_v<std::remove_reference_t<tContainer>>
-                                                                && !std::is_array_v<std::remove_reference_t<tContainer>>
-                                                                &&  std::is_same_v<value_type, typename std::remove_cv_t<std::remove_reference_t<tContainer>>::value_type>, void>>
-        constexpr Span(tContainer && input)
-            : m_begin{ input.data() }
+        template <typename tContainer, typename = std::enable_if_t<std::is_same_v<value_type, typename tContainer::value_type>, void>>
+            constexpr Span(tContainer & input)
+            : m_begin{ std::data(input) }
         {}
-        template <typename U, size_t N>
-        constexpr Span(Span<U, N> const & rhs, std::enable_if_t<(Extent == dynamic_extent) || (N == dynamic_extent) || (N == Extent), void>) noexcept
-            : m_begin{ rhs.data() }
+        template <typename U, size_t N, typename = std::enable_if_t<((N == extent) || (extent == dynamic_extent)), void>>
+        constexpr Span(Span<U, N> const& rhs) noexcept
+            : m_begin{ std::data(rhs) }
         {}
-
         [[nodiscard]]
-        constexpr reference front() const noexcept
-        {
-            return *m_begin;
-        }
-        [[nodiscard]]
-        constexpr reference back() const noexcept
-        {
-            return *((m_begin + Extent) - 1u);
-        }
-        [[nodiscard]]
-        constexpr pointer data() const noexcept
-        {
-            return m_begin;
-        }
-        [[nodiscard]]
-        constexpr iterator begin() const noexcept
-        {
-            return m_begin;
-        }
-        [[nodiscard]]
-        constexpr iterator end() const noexcept
-        {
-            return (m_begin + Extent);
-        }
-        [[nodiscard]]
-        constexpr reverse_iterator rbegin() const noexcept
-        {
-            return reverse_iterator{ (m_begin + Extent) };
-        }
-        [[nodiscard]]
-        constexpr reverse_iterator rend() const noexcept
-        {
-            return reverse_iterator{ m_begin };
-        }
-        [[nodiscard]]
-        constexpr bool empty() const noexcept
-        {
-            return (!m_begin) ? true : false;
-        }
-        [[nodiscard]]
-        constexpr size_type size() const noexcept
-        {
-            return Extent;
-        }
-        [[nodiscard]]
-        constexpr size_type size_bytes() const noexcept
-        {
-            return sizeof(element_type) * Extent;
-        }
-        [[nodiscard]]
-        constexpr Span& operator = (Span const & rhs) noexcept
+        constexpr Span& operator = (Span const& rhs) noexcept
         {
             m_begin = rhs.m_begin;
             return *this;
         }
         [[nodiscard]]
-        constexpr reference operator[](size_t const index) const noexcept
+        constexpr reference at(size_t idx) noexcept
         {
-            return m_begin[index];
+            return *(m_begin + std::min(idx, extent - 1u));
+        }
+        [[nodiscard]]
+        constexpr reference operator[](size_t idx) noexcept
+        {
+            return *(m_begin + idx);
+        }
+        [[nodiscard]]
+        constexpr reference front() noexcept
+        {
+            return *m_begin;
+        }
+        [[nodiscard]]
+        constexpr reference back() noexcept
+        {
+            return *(m_begin + (extent - 1u));
+        }
+        [[nodiscard]]
+        constexpr pointer data() noexcept
+        {
+            return m_begin;
+        }
+        [[nodiscard]]
+        constexpr iterator begin() noexcept
+        {
+            return m_begin;
+        }
+        [[nodiscard]]
+        constexpr iterator end() noexcept
+        {
+            return m_begin + extent;
+        }
+        [[nodiscard]]
+        constexpr const_iterator cbegin() const noexcept
+        {
+            return m_begin;
+        }
+        [[nodiscard]]
+        constexpr const_iterator cend() const noexcept
+        {
+            return m_begin + extent;
+        }
+        [[nodiscard]]
+        constexpr reverse_iterator rbegin() noexcept
+        {
+            return { end() };
+        }
+        [[nodiscard]]
+        constexpr reverse_iterator rend() noexcept
+        {
+            return { begin() };
+        }
+        [[nodiscard]]
+        constexpr const_reverse_iterator crbegin() const noexcept
+        {
+            return { end() };
+        }
+        [[nodiscard]]
+        constexpr const_reverse_iterator crend() const noexcept
+        {
+            return { begin() };
+        }
+        [[nodiscard]]
+        constexpr size_type size() const noexcept
+        {
+            return extent;
+        }
+        [[nodiscard]]
+        constexpr size_type size_bytes() const noexcept
+        {
+            return sizeof(value_type) * extent;
+        }
+        [[nodiscard]]
+        constexpr bool empty() const noexcept
+        {
+            return ((!m_begin) || (size() == 0)) ? true : false;
         }
         template <size_t tCount>
         [[nodiscard]]
-        constexpr Span<element_type, tCount> first() const noexcept
+        constexpr Span<value_type, tCount> first() const noexcept
         {
-            return Span<element_type, tCount>{ m_begin, (m_begin + tCount) };
+            static_assert(tCount <= extent, "Count cannot be greater than the span itself");
+            return Span<value_type, tCount>{ m_begin, (m_begin + tCount) };
         }
         [[nodiscard]]
-        constexpr Span<element_type, dynamic_extent> first(size_t const count) const noexcept
+        constexpr Span<value_type, dynamic_extent> first(size_t count) const noexcept
         {
-            return Span<element_type, dynamic_extent>{ m_begin, (m_begin + count) };
+            return Span<value_type, dynamic_extent>{ m_begin, (m_begin + std::min(count, extent)) };
         }
         template <size_t tCount>
         [[nodiscard]]
-        constexpr Span<element_type, tCount> last() const noexcept
+        constexpr Span<value_type, tCount> last() const noexcept
         {
-            return Span<element_type, tCount>{ ((m_begin + Extent) - tCount), (m_begin + Extent) };
+            static_assert(tCount <= extent, "Count cannot be greater than the span itself");
+            return Span<value_type, tCount>{ ((m_begin + extent) - tCount), (m_begin + extent) };
         }
         [[nodiscard]]
-        constexpr Span<element_type, dynamic_extent> last(size_t const count) const noexcept
+        constexpr Span<value_type, dynamic_extent> last(size_t count) const noexcept
         {
-            return Span<element_type, dynamic_extent>{ ((m_begin + Extent) - count), (m_begin + Extent) };
+            return Span<value_type, dynamic_extent>{ ((m_begin + extent) - std::min(count, extent)), (m_begin + extent) };
         }
         template <size_t tOffset, size_t tCount = dynamic_extent>
         [[nodiscard]]
-        constexpr Span<element_type, tCount != dynamic_extent ? tCount : (Extent - tOffset)> subspan() const noexcept
+        constexpr std::conditional_t<(tCount != dynamic_extent), Span<value_type, tCount>, Span<value_type, (extent - tOffset)>>
+            subspan() const noexcept
         {
-            return (tCount != dynamic_extent) ? Span<element_type, tCount>((m_begin + tOffset), (m_begin + tOffset) + tCount)
-                                              : Span<element_type, (Extent - tOffset)>((m_begin + tOffset), (m_begin + Extent));
+            if constexpr (tCount != dynamic_extent)
+            {
+                static_assert((tOffset + tCount) <= extent, "Offset + Count cannot be greater than the span itself");
+                return Span<value_type, tCount>{ (m_begin + tOffset), (m_begin + tOffset) + tCount };
+            }
+            else {
+                static_assert(tOffset <= extent, "Offset cannot be greater than the span itself");
+                return Span<value_type, (extent - tOffset)>{ (m_begin + tOffset), (m_begin + extent) };
+            }
         }
         [[nodiscard]]
-        constexpr Span<element_type, dynamic_extent> subspan(size_t const offset, size_t const count = dynamic_extent) const noexcept
+        constexpr Span<value_type, dynamic_extent> subspan(size_t offset, size_t count = dynamic_extent) const noexcept
         {
-            return (count != dynamic_extent) ? Span<element_type, dynamic_extent>((m_begin + offset), (m_begin + offset) + count)
-                                             : Span<element_type, dynamic_extent>((m_begin + offset), (m_begin + Extent));
+            return (count != dynamic_extent) 
+                ? Span<value_type, dynamic_extent>{ (m_begin + std::min(offset, extent)), (m_begin + std::min((offset + count), extent)) }
+                : Span<value_type, dynamic_extent>{ (m_begin + std::min(offset, extent)), (m_begin + extent) };
         }
 
     private:
@@ -162,23 +196,26 @@ namespace Common::Containers
     class Span<T, dynamic_extent>
     {
     public:
-        using element_type = T;
-        using value_type = std::remove_cv_t<T>;
-        using size_type = size_t;
-        
+        using value_type = T;
+
         using pointer = T*;
-        using const_pointer = T const *;
+        using const_pointer = T const*;
 
         using reference = T&;
-        using const_reference = T const &;
+        using const_reference = T const&;
 
         using iterator = T*;
+        using const_iterator = T const*;
         using reverse_iterator = std::reverse_iterator<iterator>;
+        using const_reverse_iterator = std::reverse_iterator<const_iterator>;
 
-        static constexpr size_type Extent = dynamic_extent;
+        using size_type = size_t;
+        using difference_type = ptrdiff_t;
+
+        static constexpr size_type extent = dynamic_extent;
 
         constexpr Span() noexcept = default;
-        constexpr Span(Span const &) noexcept = default;
+        constexpr Span(Span const&) noexcept = default;
         constexpr Span(Span&&) noexcept = default;
 
         template <typename tIterator, typename tSize>
@@ -192,118 +229,142 @@ namespace Common::Containers
             , m_end{ std::addressof(*begin) + std::distance(begin, end) }
         {}
         template <size_t N>
-        constexpr Span(element_type(&input)[N]) noexcept
+        constexpr Span(value_type(&input)[N]) noexcept
             : m_begin{ input }
             , m_end{ input + N }
         {}
-        template <typename tContainer, typename = std::enable_if_t<!std::is_pointer_v<std::remove_reference_t<tContainer>>
-                                                                && !std::is_array_v<std::remove_reference_t<tContainer>>
-                                                                &&  std::is_same_v<value_type, typename std::remove_cv_t<std::remove_reference_t<tContainer>>::value_type>, void>>
-        constexpr Span(tContainer&& input)
-            : m_begin{ input.data() }
-            , m_end{ input.data() + input.size() }
+        template <typename tContainer, typename = std::enable_if_t<std::is_same_v<value_type, typename tContainer::value_type>, void>>
+        constexpr Span(tContainer & input)
+            : m_begin{ std::data(input) }
+            , m_end{ std::data(input) + std::size(input) }
         {}
         template <typename U, size_t N>
-        constexpr Span(Span<U, N> const & rhs) noexcept
-            : m_begin{ rhs.data() }
-            , m_end{ rhs.data() + rhs.size() }
+        constexpr Span(Span<U, N> const& rhs) noexcept
+            : m_begin{ std::data(rhs) }
+            , m_end{ std::data(rhs) + N }
         {}
 
-        constexpr Span& operator = (Span const & rhs) noexcept
+        constexpr Span& operator = (Span const& rhs) noexcept
         {
             m_begin = rhs.m_begin;
             m_end = rhs.m_end;
             return *this;
         }
-        constexpr reference operator[](size_t const index) noexcept
+        constexpr reference operator[](size_t idx) noexcept
         {
-            return m_begin[index];
+            return *(m_begin + idx);
         }
-
         [[nodiscard]]
-        constexpr reference front() const noexcept
+        constexpr reference at(size_t idx) noexcept
+        {
+            return *(m_begin + std::min(idx, extent - 1u));
+        }
+        [[nodiscard]]
+        constexpr reference front() noexcept
         {
             return *m_begin;
         }
         [[nodiscard]]
-        constexpr reference back() const noexcept
+        constexpr reference back() noexcept
         {
             return *(m_end - 1u);
         }
         [[nodiscard]]
-        constexpr pointer data() const noexcept
+        constexpr pointer data() noexcept
         {
             return m_begin;
         }
         [[nodiscard]]
-        constexpr iterator begin() const noexcept
+        constexpr iterator begin() noexcept
         {
             return m_begin;
         }
         [[nodiscard]]
-        constexpr iterator end() const noexcept
+        constexpr iterator end() noexcept
         {
             return m_end;
         }
         [[nodiscard]]
-        constexpr reverse_iterator rbegin() const noexcept
+        constexpr const_iterator cbegin() const noexcept
+        {
+            return m_begin;
+        }
+        [[nodiscard]]
+        constexpr const_iterator cend() const noexcept
+        {
+            return m_end;
+        }
+        [[nodiscard]]
+        constexpr reverse_iterator rbegin() noexcept
         {
             return reverse_iterator{ m_end };
         }
         [[nodiscard]]
-        constexpr reverse_iterator rend() const noexcept
+        constexpr reverse_iterator rend() noexcept
         {
             return reverse_iterator{ m_begin };
         }
         [[nodiscard]]
+        constexpr const_reverse_iterator crbegin() const noexcept
+        {
+            return const_reverse_iterator{ m_end };
+        }
+        [[nodiscard]]
+        constexpr const_reverse_iterator crend() const noexcept
+        {
+            return const_reverse_iterator{ m_begin };
+        }
+        [[nodiscard]]
         constexpr bool empty() const noexcept
         {
-            return (m_begin == m_end);
+            return (size() == 0);
         }
         [[nodiscard]]
         constexpr size_type size() const noexcept
         {
-            return (m_end - m_begin);
+            return (m_end - m_begin);//std::distance(m_begin, m_end);
         }
         [[nodiscard]]
         constexpr size_type size_bytes() const noexcept
         {
-            return sizeof(element_type) * size();
+            return sizeof(value_type) * size();
         }
         template <size_t tCount>
         [[nodiscard]]
-        constexpr Span<element_type, tCount> first() const noexcept
+        constexpr Span<value_type, dynamic_extent> first() const noexcept
         {
-            return Span<element_type, tCount>{ m_begin, (m_begin + tCount) };
+            return Span<value_type, dynamic_extent>{ m_begin, (m_begin + std::min(tCount, size())) };
         }
         [[nodiscard]]
-        constexpr Span<element_type, dynamic_extent> first(size_t const count) const noexcept
+        constexpr Span<value_type, dynamic_extent> first(size_t count) const noexcept
         {
-            return Span<element_type, dynamic_extent>{ m_begin, (m_begin + count) };
+            return Span<value_type, dynamic_extent>{ m_begin, (m_begin + std::min(count, size())) };
         }
         template <size_t tCount>
         [[nodiscard]]
-        constexpr Span<element_type, tCount> last() const noexcept
+        constexpr Span<value_type, dynamic_extent> last() const noexcept
         {
-            return Span<element_type, tCount>{ (m_end - tCount), m_end };
+            return Span<value_type, dynamic_extent>{ (m_end - std::min(tCount, size())), m_end };
         }
         [[nodiscard]]
-        constexpr Span<element_type, dynamic_extent> last(size_t const count) const noexcept
+        constexpr Span<value_type, dynamic_extent> last(size_t count) const noexcept
         {
-            return Span<element_type, dynamic_extent>{ (m_end - count), m_end };
+            return Span<value_type, dynamic_extent>{ (m_end - std::min(count, size())), m_end };
         }
         template <size_t tOffset, size_t tCount = dynamic_extent>
         [[nodiscard]]
-        constexpr Span<element_type, tCount> subspan() const noexcept
+        constexpr Span<value_type, dynamic_extent> subspan() const noexcept
         {
-            return (tCount != dynamic_extent) ? Span<element_type, tCount>{ (m_begin + tOffset), ((m_begin + tOffset) + tCount) }
-                                              : Span<element_type, dynamic_extent>{ (m_begin + tOffset), m_end };
+            return (tCount != dynamic_extent)
+                ? Span<value_type, dynamic_extent>{ (m_begin + std::min(tOffset, size())), m_begin + std::min((tOffset + tCount), size()) }
+                : Span<value_type, dynamic_extent>{ (m_begin + std::min(tOffset, size())), m_end };
         }
         [[nodiscard]]
-        constexpr Span<element_type, dynamic_extent> subspan(size_t const offset, size_t const count = dynamic_extent) const noexcept
+        constexpr Span<value_type, dynamic_extent> subspan(size_t offset, size_t count = dynamic_extent) const noexcept
         {
-            return (count != dynamic_extent) ? Span<element_type, dynamic_extent>{ (m_begin + offset), ((m_begin + offset) + count) }
-                                             : Span<element_type, dynamic_extent>{ (m_begin + offset), m_end };
+            return (count != dynamic_extent)
+                ? Span<value_type, dynamic_extent>{ (m_begin + std::min(offset, size())), m_begin + std::min((offset + count), size()) }
+                : Span<value_type, dynamic_extent>{ (m_begin + std::min(offset, size())), m_end };
         }
 
     private:
@@ -314,21 +375,21 @@ namespace Common::Containers
     template <typename T1, size_t N1, typename T2, size_t N2>
     [[nodiscard]]
     constexpr std::enable_if_t<std::is_same_v<std::remove_cv_t<T1>, std::remove_cv_t<T2>>, bool>
-    operator == (Span<T1, N1> const & lhs, Span<T2, N2> const & rhs) noexcept
+        operator == (Span<T1, N1> const& lhs, Span<T2, N2> const& rhs) noexcept
     {
         return ((lhs.begin() == rhs.begin()) && (lhs.size() == rhs.size()));
     }
 
     template <typename T1, size_t N1, typename T2, size_t N2>
     [[nodiscard]]
-    constexpr bool operator != (Span<T1, N1> const & lhs, Span<T2, N2> const & rhs) noexcept
+    constexpr bool operator != (Span<T1, N1> const& lhs, Span<T2, N2> const& rhs) noexcept
     {
         return !(lhs == rhs);
     }
 
     template <typename T1, size_t N1, typename T2, size_t N2>
     constexpr std::enable_if_t<std::is_same_v<std::remove_cv_t<T1>, std::remove_cv_t<T2>>, bool>
-    equal(Span<T1, N1> const & lhs, Span<T2, N2> const & rhs) noexcept
+        equal(Span<T1, N1> const& lhs, Span<T2, N2> const& rhs) noexcept
     {
         return ((lhs.empty() && rhs.empty())
             || ((lhs.begin() == rhs.begin()) && (lhs.size() == rhs.size()))
@@ -344,5 +405,5 @@ namespace Common::Containers
     template <typename T, size_t N>
     Span(std::array<T, N>&) -> Span<T, N>;
     template <typename T, size_t N>
-    Span(std::array<T, N> const &) -> Span<T const, N>;
+    Span(std::array<T, N> const&) -> Span<T const, N>;
 }

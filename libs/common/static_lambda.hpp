@@ -7,7 +7,7 @@
 
 namespace Common
 {
-    template <typename T, typename KEY = void>
+    template <typename T, typename tKey = void>
     class StaticLambda
     {
     public:
@@ -24,10 +24,10 @@ namespace Common
             Construct(std::forward<T>(function));
             return *this;
         }
-        template <typename... ARGS>
-        decltype(auto) operator()(ARGS && ... args) const noexcept
+        template <typename... tArgs>
+        decltype(auto) operator()(tArgs && ... args) const noexcept
         {
-            return Run(std::forward<ARGS>(args)...);
+            return Run(std::forward<tArgs>(args)...);
         }
 
     private:
@@ -54,15 +54,16 @@ namespace Common
         }
 
     public:
-        template <typename... ARGS>
-        static auto Run(ARGS && ... args) noexcept -> decltype(GetFunction()(std::forward<ARGS>(args)...))
+        template <typename... tArgs>
+        static auto Run(tArgs && ... args) noexcept -> decltype(GetFunction()(std::forward<tArgs>(args)...))
         {
             if (s_dataPtr)
             {
-                return GetFunction()(std::forward<ARGS>(args)...);
+                return GetFunction()(std::forward<tArgs>(args)...);
             }
-            else {
-                if constexpr(std::is_void_v<decltype(GetFunction()(std::forward<ARGS>(args)...))>)
+            else 
+            {
+                if constexpr(std::is_void_v<decltype(GetFunction()(std::forward<tArgs>(args)...))>)
                 {
                     return;
                 }

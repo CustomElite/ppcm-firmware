@@ -9,9 +9,9 @@ namespace MCU::SYSTICK
     class Module
     {
     public:
-        Module(uint32_t const core_clock, uint32_t const tick_frequency = 1'000u) noexcept
+        Module(std::size_t const core_clock, std::size_t const tick_frequency = 1'000u) noexcept
         {
-            SysTick->LOAD = (uint32_t)((core_clock / tick_frequency) - 1ul);
+            SysTick->LOAD = static_cast<std::uint32_t>((core_clock / tick_frequency) - 1ul);
             SysTick->VAL = 0ul;
             SysTick->CTRL = SysTick_CTRL_CLKSOURCE_Msk | SysTick_CTRL_TICKINT_Msk | SysTick_CTRL_ENABLE_Msk;
         }
@@ -23,7 +23,7 @@ namespace MCU::SYSTICK
         { 
             return s_counter; 
         }
-        static void Wait(uint32_t const ticks) noexcept
+        static void Wait(std::size_t const ticks) noexcept
         {
             uint64_t const volatile end = Ticks() + ticks;
             while (Ticks() < end);
@@ -34,7 +34,7 @@ namespace MCU::SYSTICK
         }
     
     private:
-        using interrupt_t = ISR::Interrupt<Module, ISR::InterruptSource::eSysTick, 1u>;
+        using interrupt_t = ISR::Kernal<Module, ISR::InterruptSource::eSysTick, 1u>;
 
         interrupt_t const m_interrupt;
 

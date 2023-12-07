@@ -2,321 +2,319 @@
 
 #include "macros.h"
 
+#include <bit>
 #include <cstdint>
-#include <cstddef>
 
 namespace Common 
 {
-    template <typename T, uint32_t ADDR, T BITMASK>
+    template <typename T, uint32_t tAddress, T tBitmask>
     class Bitfield
     {
     public:
-        using type = T;
-        using pointer = T volatile * const;
+        using Type = Bitfield<T, tAddress, tBitmask>;
+
+        using ValueType = T;
+        using Pointer = T volatile * const;
 
         ALWAYS_INLINE 
         void Clear() noexcept
         {
-            (*Address) &= nBitmask;
+            (*s_Address) &= s_NMask;
         }
         ALWAYS_INLINE 
-        void Set(type const input) noexcept
+        void Set() noexcept
         {
-            (*Address) = (*Address & nBitmask) | apply_mask(input);
+            (*s_Address) = (*s_Address & s_NMask) | s_Mask;
         }
         ALWAYS_INLINE 
-        void Toggle(type const input) noexcept
+        void Toggle() noexcept
         {
-            (*Address) ^= apply_mask(input);
+            (*s_Address) ^= s_Mask;
         }
         ALWAYS_INLINE 
-        type Read() const noexcept
+        void Write(ValueType const input) noexcept
         {
-            return (((*Address) & Bitmask) >> BitPosition);
+            (*s_Address) = (*s_Address & s_NMask) | apply_mask(input);
         }
         ALWAYS_INLINE 
-        Bitfield & operator = (type const rhs) noexcept
+        ValueType Read() const noexcept
         {
-            Set(rhs);
-            return *this;
+            return (((*s_Address) & s_Mask) >> s_Position);
         }
-        ALWAYS_INLINE 
-        operator type() const noexcept
+        ALWAYS_INLINE
+        operator ValueType() const noexcept
         {
             return Read();
         }
         ALWAYS_INLINE 
-        Bitfield & operator |= (type rhs) noexcept
+        Bitfield & operator = (ValueType const other) noexcept
         {
-            (*Address) |= apply_mask(rhs);
+            Write(other);
             return *this;
         }
         ALWAYS_INLINE 
-        Bitfield & operator &= (type rhs) noexcept
+        Bitfield & operator |= (ValueType const other) noexcept
         {
-            (*Address) &= (apply_mask(rhs) | nBitmask);
+            (*s_Address) |= apply_mask(other);
+            return *this;
+        }
+        ALWAYS_INLINE 
+        Bitfield & operator &= (ValueType const other) noexcept
+        {
+            (*s_Address) &= (apply_mask(other) | s_NMask);
             return *this;
         }
 
     private:
-        static constexpr auto get_position() noexcept
+        static auto apply_mask(ValueType const input) noexcept
         {
-            type start{ 0 };
-            type mask{ BITMASK };
-
-            while((mask & 1) == 0)
-            {
-                ++start;
-                mask >>= 1;
-            }
-
-            return start;
-        }
-        static auto apply_mask(type input) noexcept
-        {
-            return ((input << BitPosition) & Bitmask);
+            return ((input << s_Position) & s_Mask);
         }
 
-        static constexpr type Bitmask = BITMASK;
-        static constexpr type nBitmask = (~Bitmask);
-        static constexpr type BitPosition = get_position();
+        static constexpr ValueType s_Mask{ tBitmask };
+        static constexpr ValueType s_NMask{ (~s_Mask) };
+        static constexpr ValueType s_Position{ std::countr_zero(s_Mask) };
 
-        inline static pointer Address = reinterpret_cast<pointer>(ADDR);
+        inline static Pointer s_Address{ reinterpret_cast<Pointer>(tAddress) };
     };
 
-    template <typename T, uint32_t ADDR>
+    template <typename T, uint32_t tAddress>
     struct RawRegister
     {
-        using type = T;
-        using pointer = T volatile * const;
+        using Type = RawRegister<T, tAddress>;
+
+        using ValueType = T;
+        using Pointer = T volatile * const;
 
         constexpr RawRegister() = default;
 
-        inline static pointer s_addr = reinterpret_cast<pointer>(ADDR);
-
         ALWAYS_INLINE 
-        void Write(type input) noexcept
+        void Write(ValueType const input) noexcept
         {
-            (*s_addr) = input;
+            (*s_Address) = input;
         }
         ALWAYS_INLINE 
-        type Read() const noexcept
+        ValueType Read() const noexcept
         {
-            return *s_addr;
+            return *s_Address;
         }
         ALWAYS_INLINE 
         RawRegister & Access() noexcept
         {
             return *this;
         }
-        template <type MASK>
+        template <ValueType tMask>
         ALWAYS_INLINE 
-        Bitfield<T, ADDR, MASK> GetBitfield() const noexcept
+        Bitfield<T, tAddress, tMask> CreateBitfield() const noexcept
         {
             return {};
         }
         ALWAYS_INLINE 
-        RawRegister & operator = (type const & input) noexcept
+        RawRegister & operator =(ValueType const input) noexcept
         {
-            (*s_addr) = input;
+            (*s_Address) = input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator %= (type const & input) noexcept
+        RawRegister & operator %=(ValueType const input) noexcept
         {
-            (*s_addr) %= input;
+            (*s_Address) %= input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator ^= (type const & input) noexcept
+        RawRegister & operator ^=(ValueType const input) noexcept
         {
-            (*s_addr) ^= input;
+            (*s_Address) ^= input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator *= (type const & input) noexcept
+        RawRegister & operator *=(ValueType const input) noexcept
         {
-            (*s_addr) *= input;
+            (*s_Address) *= input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator /= (type const & input) noexcept
+        RawRegister & operator /=(ValueType const input) noexcept
         {
-            (*s_addr) /= input;
+            (*s_Address) /= input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator += (type const & input) noexcept
+        RawRegister & operator +=(ValueType const input) noexcept
         {
-            (*s_addr) += input;
+            (*s_Address) += input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator -= (type const & input) noexcept
+        RawRegister & operator -=(ValueType const input) noexcept
         {
-            (*s_addr) -= input;
+            (*s_Address) -= input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator |= (type const & input) noexcept
+        RawRegister & operator |=(ValueType const input) noexcept
         {
-            (*s_addr) |= input;
+            (*s_Address) |= input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator &= (type const & input) noexcept
+        RawRegister & operator &=(ValueType const input) noexcept
         {
-            (*s_addr) &= input;
+            (*s_Address) &= input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator <<= (type const & input) noexcept
+        RawRegister & operator <<=(ValueType const input) noexcept
         {
-            (*s_addr) <<= input;
+            (*s_Address) <<= input;
             return *this;
         }
         ALWAYS_INLINE 
-        RawRegister & operator >>= (type const & input) noexcept
+        RawRegister & operator >>=(ValueType const input) noexcept
         {
-            (*s_addr) >>= input;
+            (*s_Address) >>= input;
             return *this;
         }
         ALWAYS_INLINE 
         RawRegister & operator--() noexcept
         {
-            --(*s_addr);
+            --(*s_Address);
             return *this;
         }
         ALWAYS_INLINE 
-        type operator--(int) noexcept
+        ValueType operator--(int) noexcept
         {
-            auto retval = (*s_addr);
-            --(*s_addr);
+            auto retval = (*s_Address);
+            --(*s_Address);
             return retval;
         }
         ALWAYS_INLINE 
         RawRegister & operator++() noexcept
         {
-            ++(*s_addr);
+            ++(*s_Address);
             return *this;
         }
         ALWAYS_INLINE 
-        type operator++(int) noexcept
+        ValueType operator++(int) noexcept
         {
-            auto retval = (*s_addr);
-            ++(*s_addr);
+            auto retval = (*s_Address);
+            ++(*s_Address);
             return retval;
         }
         ALWAYS_INLINE 
-        type operator ~ () const noexcept
+        ValueType operator ~ () const noexcept
         {
-            return ~(*s_addr);
+            return ~(*s_Address);
         }
         ALWAYS_INLINE 
-        type operator - () const noexcept
+        ValueType operator - () const noexcept
         {
-            return -(*s_addr);
+            return -(*s_Address);
         }
         ALWAYS_INLINE 
-        type operator + () const noexcept
+        ValueType operator + () const noexcept
         {
-            return +(*s_addr);
+            return +(*s_Address);
         }
         ALWAYS_INLINE 
-        type operator ^ (type const & input) const noexcept
+        ValueType operator ^ (ValueType const input) const noexcept
         {
-            return (*s_addr) ^ input;
+            return (*s_Address) ^ input;
         }
         ALWAYS_INLINE 
-        type operator % (type const & input) const noexcept
+        ValueType operator % (ValueType const input) const noexcept
         {
-            return (*s_addr) % input;
+            return (*s_Address) % input;
         }
         ALWAYS_INLINE 
-        type operator & (type const & input) const noexcept
+        ValueType operator & (ValueType const input) const noexcept
         {
-            return (*s_addr) & input;
+            return (*s_Address) & input;
         }
         ALWAYS_INLINE 
-        type operator | (type const & input) const noexcept
+        ValueType operator | (ValueType const input) const noexcept
         {
-            return (*s_addr) | input;
+            return (*s_Address) | input;
         }
         ALWAYS_INLINE 
-        type operator + (type const & input) const noexcept
+        ValueType operator + (ValueType const input) const noexcept
         {
-            return (*s_addr) + input;
+            return (*s_Address) + input;
         }
         ALWAYS_INLINE 
-        type operator - (type const & input) const noexcept
+        ValueType operator - (ValueType const input) const noexcept
         {
-            return (*s_addr) - input;
+            return (*s_Address) - input;
         }
         ALWAYS_INLINE 
-        type operator * (type const & input) const noexcept
+        ValueType operator * (ValueType const input) const noexcept
         {
-            return (*s_addr) * input;
+            return (*s_Address) * input;
         }
         ALWAYS_INLINE 
-        type operator / (type const & input) const noexcept
+        ValueType operator / (ValueType const input) const noexcept
         {
-            return (*s_addr) / input;
+            return (*s_Address) / input;
         }
         ALWAYS_INLINE 
-        type operator << (type const & input) const noexcept
+        ValueType operator << (ValueType const input) const noexcept
         {
-            return (*s_addr) << input;
+            return (*s_Address) << input;
         }
         ALWAYS_INLINE 
-        type operator >> (type const & input) const noexcept
+        ValueType operator >> (ValueType const input) const noexcept
         {
-            return (*s_addr) >> input;
+            return (*s_Address) >> input;
         }
         ALWAYS_INLINE 
         bool operator ! () const noexcept
         {
-            return !(*s_addr);
+            return !(*s_Address);
         }
         ALWAYS_INLINE 
-        bool operator && (type const & input) const noexcept
+        bool operator && (ValueType const input) const noexcept
         {
-            return (*s_addr) && input;
+            return (*s_Address) && input;
         }
         ALWAYS_INLINE 
-        bool operator || (type const & input) const noexcept
+        bool operator || (ValueType const input) const noexcept
         {
-            return (*s_addr) || input;
+            return (*s_Address) || input;
+        }
+        ALWAYS_INLINE
+        bool operator == (ValueType const input) const noexcept
+        {
+            return (*s_Address) == input;
         }
         ALWAYS_INLINE 
-        bool operator == (type const & input) const noexcept
+        bool operator != (ValueType const input) const noexcept
         {
-            return (*s_addr) == input;
+            return (*s_Address) != input;
         }
         ALWAYS_INLINE 
-        bool operator != (type const & input) const noexcept
+        bool operator < (ValueType const input) const noexcept
         {
-            return (*s_addr) != input;
+            return (*s_Address) < input;
         }
         ALWAYS_INLINE 
-        bool operator < (type const & input) const noexcept
+        bool operator <= (ValueType const input) const noexcept
         {
-            return (*s_addr) < input;
+            return (*s_Address) <= input;
         }
         ALWAYS_INLINE 
-        bool operator <= (type const & input) const noexcept
+        bool operator > (ValueType const input) const noexcept
         {
-            return (*s_addr) <= input;
+            return (*s_Address) > input;
         }
         ALWAYS_INLINE 
-        bool operator > (type const & input) const noexcept
+        bool operator >= (ValueType const input) const noexcept
         {
-            return (*s_addr) > input;
+            return (*s_Address) >= input;
         }
-        ALWAYS_INLINE 
-        bool operator >= (type const & input) const noexcept
-        {
-            return (*s_addr) >= input;
-        }
+
+    private:
+        inline static Pointer s_Address{ reinterpret_cast<Pointer>(tAddress) };
+
     };
 }
 

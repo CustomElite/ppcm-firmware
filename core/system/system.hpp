@@ -67,7 +67,7 @@ namespace System
 
             CoreModules() noexcept :
                 sysBus{},
-                sysTick{ SystemBus_t::CoreClockFreq(), 1_KHz },
+                sysTick{ SystemBus_t::SystemClockFreq(), 1_KHz },
                 statusLED{ MCU::IO::Output::PushPull, MCU::IO::State::High }
             {}
         };

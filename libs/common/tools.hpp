@@ -4,21 +4,11 @@
 
 namespace Common::Tools
 {
-    template <typename T, class = void>
-    struct EnumType
-    {
-        using type = T;
-    };
     template <typename T>
-    struct EnumType<T, std::enable_if_t<std::is_enum_v<T>>>
+    requires std::is_enum_v<T>
+    constexpr auto EnumValue(T val) noexcept
     {
-        using type = std::underlying_type_t<T>;
-    };
-
-    template <typename T, typename U = std::underlying_type_t<T>>
-    constexpr auto EnumValue(T val) noexcept -> U
-    {
-        return static_cast<U>(val);
+        return static_cast<std::underlying_type_t<T>>(val);
     }
 
     template <typename T, typename... Args>

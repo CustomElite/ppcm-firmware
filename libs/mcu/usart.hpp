@@ -6,16 +6,13 @@
 #include "rcc.hpp"
 #include "gpio.hpp"
 #include "interrupt.hpp"
-#include "stm32f103xb.h"
 #include "usart_registers.hpp"
 
-#include "common/run_once.hpp"
 #include "common/static_lambda.hpp"
-#include "common/containers/fifo.hpp"
+#include "common/containers/ring_buffer.hpp"
 
 #include <cstddef>
 #include <cstdint>
-#include <span>
 
 namespace MCU::USART 
 {
@@ -28,14 +25,14 @@ namespace MCU::USART
 
     namespace {
         template <Peripheral tPeriph>
-        constexpr auto GetClockID() noexcept
+        constexpr auto ClockID() noexcept
         {
             if constexpr (tPeriph == Peripheral::USART_1) { return CLK::ClockID::APB2_USART1; }
             if constexpr (tPeriph == Peripheral::USART_2) { return CLK::ClockID::APB1_USART2; }
             if constexpr (tPeriph == Peripheral::USART_3) { return CLK::ClockID::APB1_USART3; }
         }
         template <Peripheral tPeriph>
-        constexpr auto GetInterruptSource() noexcept
+        constexpr auto InterruptSource() noexcept
         {
             if constexpr (tPeriph == Peripheral::USART_1) { return ISR::InterruptSource::eUSART1; }
             if constexpr (tPeriph == Peripheral::USART_2) { return ISR::InterruptSource::eUSART2; }
@@ -48,9 +45,9 @@ namespace MCU::USART
         Peripheral tPeriph
         , typename tTxPin
         , typename tRxPin
-        , unsigned tPeriphClock
-        , unsigned tBaudRate = 9600u
-        , DataDirection tDirection = DataDirection::TX_RX
+        , size_t tPeriphClock
+        , size_t tBaudRate = 9600u
+        , DataDirection tDirection = DataDirection::TxRx
         , DataWidth tWidth = DataWidth::_8bits
         , Parity tParity = Parity::None
         , StopBits tStopBits = StopBits::_1bit
@@ -69,50 +66,51 @@ namespace MCU::USART
         static constexpr auto s_Parity = tParity;
         static constexpr auto s_StopBits = tStopBits;
         static constexpr auto s_FlowControl = tFlow;
+
+        constexpr Properties() noexcept = default;
+
+    private:
+        tx_pin_t const m_tx{ IO::Alternate::PushPull };
+        rx_pin_t const m_rx{ IO::PullResistor::PullUp, IO::Input::PuPd };
     };
 
     template <Peripheral tPeriph, size_t BufferSize = 64u>
     struct DataHandler
     {
-        using buffer_type = Common::Containers::FIFO<char, BufferSize>;
+        using buffer_t = Common::Containers::RingBuffer<char, BufferSize>;
 
-        using regs_t = Registers<Common::Tools::EnumValue(tPeriph)>;
-        using SR = typename regs_t::SR;
-        using DR = typename regs_t::DR;
-        using CR1 = typename regs_t::CR1;
+        using HW = HardwareKernal<Common::Tools::EnumValue(tPeriph)>;
 
-        inline static buffer_type m_rxBuffer{};
-        inline static buffer_type m_txBuffer{};
+        inline static buffer_t s_rxBuffer{};
+        inline static Common::Containers::RingBuffer<char, 8> s_txBuffer{};
 
         ALWAYS_INLINE
         static void TransmitInternal() noexcept
         {
-            if (!CR1{}.TCIE())
+            
+            if (!HW::Registers::CR1().TCIE())
             {
-                CR1{}.TCIE() = true;
+                HW::Registers::CR1().TCIE() = true;
             }
 
-            if (auto data{ m_txBuffer.Pop() }; data.has_value())
+            if (auto data{ s_txBuffer.Pop() }; data.has_value())
             {
-                DR{} = data.value();
+                HW::Registers::DR() = data.value();
             }
             else {
-                CR1{}.TCIE() = false;
+                HW::Registers::CR1().TCIE() = false;
             }
         }
         ALWAYS_INLINE
         static void BlockingTransmit(char const input) noexcept
         {
-            while (!SR{}.TC());
-            DR{} = input;
+            while (!HW::Registers::SR().TC());
+            HW::Registers::DR() = input;
         }
         ALWAYS_INLINE
         static void PushTx(char const input) noexcept
         {
-            if (!m_txBuffer.IsFull())
-            {
-                m_txBuffer.Push(input);
-            }
+            s_txBuffer.Push(input);
         }
         ALWAYS_INLINE
         static bool IsTerminator(char const input) noexcept
@@ -127,68 +125,54 @@ namespace MCU::USART
         }
     };
 
-    template <typename tProperties, typename tCallable>
-    class Module : private tProperties
+    template <typename tProperties, typename tCallback>
+    class Module : private tProperties, Common::StaticLambda<tCallback>
     {
     public:
         template <typename C>
         Module(C && callback) noexcept
-            : m_tx{ IO::Alternate::PushPull }
-            , m_rx{ IO::Input::PuPd, IO::PullResistor::PullUp }
-            , m_callback{ std::forward<C>(callback) }
+            : Properties{}
+            , Callback{ std::forward<C>(callback) }
         {
-            regs_t{}.SetBaudRate(s_PeriphClockFreq, s_BaudRate);
+            HW::SetBaudRate(s_PeriphClockFreq, s_BaudRate);
             
-            regs_t{}.Configure(s_DataDirection, s_DataWidth, s_Parity, s_StopBits, s_FlowControl);
+            HW::Configure(s_DataDirection, s_DataWidth, s_Parity, s_StopBits, s_FlowControl);
 
-            CR1{}.RXNEIE() = true;
+            HW::Registers::CR1().RXNEIE() = true;
 
-            Enable();
+            HW::Enable();
         }
-        Module(tProperties, tCallable && callback) noexcept :
-            Module{ std::forward<tCallable>(callback) }
+        Module(tProperties, tCallback && callback) noexcept
+            : Module{ std::forward<tCallback>(callback) }
         {}
-        ~Module(){}
-        ALWAYS_INLINE
-        static void Enable() noexcept
+        ~Module()
         {
-            if (!CR1{}.UE().Read())
-            {
-                CR1{}.UE() = true;
-            }
+            HW::Disable();
         }
-        ALWAYS_INLINE
-        static void Disable() noexcept
-        {
-            if (CR1{}.UE().Read())
-            {
-                CR1{}.UE() = false;
-            }
-        }
-
+        
         static void Interrupt() noexcept
         {
-            if (SR{}.RXNE())
+            if (HW::Registers::SR().RXNE())
             {
-                char const c = DR{}.Read();
-                if (!data_t{}.IsTerminator(c))
+                char const c = HW::Registers::DR().Read();
+                if (!Data::IsTerminator(c))
                 {
-                    data_t{}.PushTx(c);
+                    Data::PushTx(c);
                     if constexpr (0)
                     {
-                        data_t::BlockingTransmit(c);
+                        Data::BlockingTransmit(c);
                     }
                 }
                 else {
                     //data_t::BlockingSendBuffer(data_t::m_txBuffer);
-                    callback_t::Run(true);
-                    data_t{}.TransmitInternal();
-                    data_t::m_rxBuffer.Clear();
+                    Callback::Run(true);
+                    Data::TransmitInternal();
+                    Data::s_rxBuffer.Clear();
                 }
             }
-            else if (SR{}.TC())
+            else if (HW::Registers::SR().TC())
             {
-                data_t{}.TransmitInternal();
+                Data::TransmitInternal();
             }
         }
 
@@ -202,31 +186,18 @@ namespace MCU::USART
             , tProperties::s_StopBits
             , tProperties::s_FlowControl;
         
-        using typename tProperties::tx_pin_t;
-        using typename tProperties::rx_pin_t;
-
-        using data_t = DataHandler<s_Peripheral>;
-
-        using regs_t = Registers<Common::Tools::EnumValue(s_Peripheral)>;
-        using SR = typename regs_t::SR;
-        using DR = typename regs_t::DR;
-        using BRR =typename regs_t::BRR;
-        using CR1 = typename regs_t::CR1;
-        using CR2 = typename regs_t::CR2;
-        using CR3 = typename regs_t::CR3;
-        using GTPR = typename regs_t::GTPR;
+        using Data = DataHandler<s_Peripheral>;
+        using Properties = tProperties;
+        using Callback = Common::StaticLambda<tCallback>;
+        using HW = HardwareKernal<Common::Tools::EnumValue(s_Peripheral)>;
         
-        using kernal_t = CLK::Kernal<GetClockID<s_Peripheral>()>;
-        using isr_t = ISR::Interrupt<Module, GetInterruptSource<s_Peripheral>()>;
-        using callback_t = Common::StaticLambda<tCallable>;
+        using clk_t = CLK::Kernal<ClockID<s_Peripheral>()>;
+        using isr_t = ISR::Kernal<Module, InterruptSource<s_Peripheral>()>;
+        
 
     private:
-        kernal_t const m_clk{};
+        clk_t const m_clk{};
         isr_t const m_isr{};
-
-        tx_pin_t const m_tx;
-        rx_pin_t const m_rx;
-        callback_t const m_callback;
     };
 
     template <typename CFG, typename CB>

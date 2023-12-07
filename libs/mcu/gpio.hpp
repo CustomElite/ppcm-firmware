@@ -1,11 +1,7 @@
 #pragma once
 
-#include "macros.h"
-
 #include "rcc.hpp"
 #include "gpio_registers.hpp"
-
-#include "common/run_once.hpp"
 
 namespace MCU::IO 
 {
@@ -18,11 +14,9 @@ namespace MCU::IO
         E
     };
 
-    
-
     namespace {
         template <Port tPort>
-        constexpr auto GetClockID() noexcept
+        constexpr auto ClockID() noexcept
         {
             if constexpr (tPort == Port::A) { return CLK::ClockID::APB2_GPIOA; }
             if constexpr (tPort == Port::B) { return CLK::ClockID::APB2_GPIOB; }
@@ -38,51 +32,45 @@ namespace MCU::IO
         static_assert((tPin >= 0) && (tPin <= 15u), "Pin number does not exist. Only pins 0-15 are valid.");
 
     public:
+        static constexpr size_t Port = Common::Tools::EnumValue(tPort);
+        static constexpr size_t Pin = tPin;
+
+    public:
         template <typename... Args>
         Module(Args... args) noexcept
         {
-            Set(args...);
+            ( HAL::Set(args), ... );
         }
         template <typename T>
         Module & operator = (T input) noexcept
         {
-            regs_t::Set(input);
+            HAL::Set(input);
             return *this;
         }
         Module & operator = (bool const input) noexcept
         {
-            regs_t::Set((State)input);
+            HAL::Set((State)input);
             return *this;
         }
         static void Toggle() noexcept
         {
             
         }
-        template <typename... tArgs>
-        static void Set(tArgs... args) noexcept
-        {
-            ( regs_t::Set(args), ... );
-        }
         static bool Lock() noexcept
         {
-            return regs_t::Lock();
+            return HAL::Lock();
         }
         static bool IsLocked() noexcept
         {
-            return regs_t::IsLocked();
+            return HAL::IsLocked();
         }
         
     private:
-        using regs_t = Registers<Common::Tools::EnumValue(tPort), tPin>;
-        using CRx = typename regs_t::CRx;
-        using IDR = typename regs_t::IDR;
-        using ODR = typename regs_t::ODR;
-        using BSRR = typename regs_t::BSRR;
-        using LCKR = typename regs_t::LCKR;
+        using HAL = IPeripheral<Port, Pin>;
 
-        using clk_t = CLK::Kernal<GetClockID<tPort>()>;
+        using CLK_t = CLK::Kernal<ClockID<tPort>()>;
     private:
-        clk_t const m_kernal{};
+        CLK_t const m_clk{};
     };
 
     struct NoPin

@@ -2,11 +2,11 @@
 
 #include "macros.h"
 
-#include "common/math.hpp"
 #include "common/tools.hpp"
 
 #include "stm32f1xx.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace MCU::ISR
@@ -70,14 +70,14 @@ namespace MCU::ISR
         eUSBWakeUp = USBWakeUp_IRQn      
     };
 
-    template <InterruptSource TSource>
+    template <InterruptSource tSource>
     static constexpr bool IsEnablable() noexcept
     {
-        return (Common::Tools::EnumValue(TSource) >= 0);
+        return (Common::Tools::EnumValue(tSource) >= 0);
     }
 
-    template <InterruptSource TSource>
-    class InterruptDelegator
+    template <InterruptSource tSource>
+    class Dispatcher
     {
     public:
         using void_function_t = void(*)();
@@ -118,44 +118,41 @@ namespace MCU::ISR
         inline static void_function_t s_callback{ nullptr };
     };
     
-    template <class TPeriph, InterruptSource TSource, unsigned TPriority = 5u>
-    class Interrupt : public InterruptDelegator<TSource>
+    template <class tModule, InterruptSource tSource, unsigned tPriority = 5u>
+    class Kernal : public Dispatcher<tSource>
     {
     public:
-        using base_t = InterruptDelegator<TSource>;
+        using base_t = Dispatcher<tSource>;
         using void_function_t = typename base_t::void_function_t;
 
-        ALWAYS_INLINE 
-        Interrupt(void_function_t && isr) noexcept
+        Kernal(void_function_t && isr) noexcept
         {
             if (base_t::Register(std::forward<void_function_t>(isr)))
             {
-                if constexpr (IsEnablable<TSource>())
+                if constexpr (IsEnablable<tSource>())
                 {
                     __NVIC_SetPriority
                     (
-                        (IRQn_Type)TSource, 
+                        (IRQn_Type)tSource, 
                         NVIC_EncodePriority
                         (
                             __NVIC_GetPriorityGrouping(), 
-                            Common::Math::Minimum(TPriority, 15u), 
+                            std::min(tPriority, 15u), 
                             0
                         )
                     );
-                    __NVIC_EnableIRQ((IRQn_Type)TSource);
+                    __NVIC_EnableIRQ((IRQn_Type)tSource);
                 }
             }
         }
-        ALWAYS_INLINE 
-        Interrupt() noexcept : 
-            Interrupt{ TPeriph::Interrupt } 
+        Kernal() noexcept : 
+            Kernal{ tModule::Interrupt } 
         {}
-        ALWAYS_INLINE 
-        ~Interrupt() noexcept
+        ~Kernal() noexcept
         {
             if (base_t::Registered())
             {
-                if constexpr (IsEnablable<TSource>()) { __NVIC_DisableIRQ((IRQn_Type)TSource); }
+                if constexpr (IsEnablable<tSource>()) { __NVIC_DisableIRQ((IRQn_Type)tSource); }
                 base_t::Unregister();
             }
         }
